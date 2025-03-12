@@ -569,8 +569,6 @@ class Qwen2VLGRPOTrainer(Trainer):
 
         # Generate completions
         with unwrap_model_for_generation(model, self.accelerator) as unwrapped_model:
-            print("Prompt inputs:")
-            pprint.pp(prompt_inputs)
 
             prompt_completion_ids = unwrapped_model.generate(
                 **prompt_inputs, 
