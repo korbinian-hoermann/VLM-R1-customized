@@ -498,13 +498,15 @@ class Qwen2VLGRPOTrainer(Trainer):
     def _generate_and_score_completions(self, inputs: dict[str, Union[torch.Tensor, Any]], model) -> dict[str, Union[torch.Tensor, Any]]:
         print("=" * 50)
         print("Generating completions...")
+        print("1. Initial inputs:")
         pprint.pp(inputs)
 
         device = self.accelerator.device
         prompts = [x["prompt"] for x in inputs]
+        print("2. Prompts:")
         pprint.pp(prompts)
-        print("-"*50)
         prompts_text = [maybe_apply_chat_template(example, self.processing_class)["prompt"] for example in inputs]
+        print("3. Prompts text (after chat template?):")
         pprint.pp(prompts_text)
         # Handle both pre-loaded images and image paths
         images = []
@@ -622,7 +624,7 @@ class Qwen2VLGRPOTrainer(Trainer):
 
         # Decode the generated completions
         completions = self.processing_class.batch_decode(completion_ids, skip_special_tokens=True)
-        print("Completions:")
+        print("5. Completions:")
         pprint.pp(completions)
         if is_conversational(inputs[0]):
             completions = [[{"role": "assistant", "content": completion}] for completion in completions]
