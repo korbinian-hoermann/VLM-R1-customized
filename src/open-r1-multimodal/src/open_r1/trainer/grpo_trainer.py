@@ -498,7 +498,7 @@ class Qwen2VLGRPOTrainer(Trainer):
     def _generate_and_score_completions(self, inputs: dict[str, Union[torch.Tensor, Any]], model) -> dict[str, Union[torch.Tensor, Any]]:
         print("=" * 50)
         print("Generating completions...")
-        print(inputs.keys())
+        pprint.pp(inputs)
 
         device = self.accelerator.device
         prompts = [x["prompt"] for x in inputs]
