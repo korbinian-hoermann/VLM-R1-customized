@@ -33,8 +33,7 @@ from open_r1.utils.pycocotools.cocoeval import COCOeval
 import json
 
 # ----------------------- Fix the flash attention bug in the current version of transformers -----------------------
-from transformers.models.qwen2_5_vl.modeling_qwen2_5_vl import Qwen2_5_VLVisionFlashAttention2, \
-    apply_rotary_pos_emb_flashatt, flash_attn_varlen_func
+from transformers.models.qwen2_5_vl.modeling_qwen2_5_vl import Qwen2_5_VLVisionFlashAttention2, apply_rotary_pos_emb_flashatt, flash_attn_varlen_func
 import torch
 from typing import Tuple
 from transformers.utils import logging
@@ -48,46 +47,43 @@ client = OpenAI(
     base_url=os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 )
 
-
 def custom_forward(
         self,
         hidden_states: torch.Tensor,
         cu_seqlens: torch.Tensor,
         rotary_pos_emb: Optional[torch.Tensor] = None,
         position_embeddings: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-) -> torch.Tensor:
-    seq_length = hidden_states.shape[0]
-    q, k, v = self.qkv(hidden_states).reshape(seq_length, 3, self.num_heads, -1).permute(1, 0, 2, 3).unbind(0)
-    # print(111, 222, 333, 444, 555, 666, 777, 888, 999)
-    if position_embeddings is None:
-        logger.warning_once(
-            "The attention layers in this model are transitioning from computing the RoPE embeddings internally "
-            "through `rotary_pos_emb` (2D tensor of RoPE theta values), to using externally computed "
-            "`position_embeddings` (Tuple of tensors, containing cos and sin). In v4.54 `rotary_pos_emb` will be "
-            "removed and `position_embeddings` will be mandatory."
+    ) -> torch.Tensor:
+        seq_length = hidden_states.shape[0]
+        q, k, v = self.qkv(hidden_states).reshape(seq_length, 3, self.num_heads, -1).permute(1, 0, 2, 3).unbind(0)
+        # print(111, 222, 333, 444, 555, 666, 777, 888, 999)
+        if position_embeddings is None:
+            logger.warning_once(
+                "The attention layers in this model are transitioning from computing the RoPE embeddings internally "
+                "through `rotary_pos_emb` (2D tensor of RoPE theta values), to using externally computed "
+                "`position_embeddings` (Tuple of tensors, containing cos and sin). In v4.54 `rotary_pos_emb` will be "
+                "removed and `position_embeddings` will be mandatory."
+            )
+            emb = torch.cat((rotary_pos_emb, rotary_pos_emb), dim=-1)
+            cos = emb.cos().float()
+            sin = emb.sin().float()
+        else:
+            cos, sin = position_embeddings
+            # Add this
+            cos = cos.to(torch.float)
+            sin = sin.to(torch.float)
+        q, k = apply_rotary_pos_emb_flashatt(q.unsqueeze(0), k.unsqueeze(0), cos, sin)
+        q = q.squeeze(0)
+        k = k.squeeze(0)
+
+        max_seqlen = (cu_seqlens[1:] - cu_seqlens[:-1]).max().item()
+        attn_output = flash_attn_varlen_func(q, k, v, cu_seqlens, cu_seqlens, max_seqlen, max_seqlen).reshape(
+            seq_length, -1
         )
-        emb = torch.cat((rotary_pos_emb, rotary_pos_emb), dim=-1)
-        cos = emb.cos().float()
-        sin = emb.sin().float()
-    else:
-        cos, sin = position_embeddings
-        # Add this
-        cos = cos.to(torch.float)
-        sin = sin.to(torch.float)
-    q, k = apply_rotary_pos_emb_flashatt(q.unsqueeze(0), k.unsqueeze(0), cos, sin)
-    q = q.squeeze(0)
-    k = k.squeeze(0)
-
-    max_seqlen = (cu_seqlens[1:] - cu_seqlens[:-1]).max().item()
-    attn_output = flash_attn_varlen_func(q, k, v, cu_seqlens, cu_seqlens, max_seqlen, max_seqlen).reshape(
-        seq_length, -1
-    )
-    attn_output = self.proj(attn_output)
-    return attn_output
-
+        attn_output = self.proj(attn_output)
+        return attn_output
 
 Qwen2_5_VLVisionFlashAttention2.forward = custom_forward
-
 
 @dataclass
 class GRPOScriptArguments(ScriptArguments):
@@ -136,7 +132,6 @@ class GRPOScriptArguments(ScriptArguments):
         },
     )
 
-
 def extract_choice(text):
     # 1. Clean and normalize text
     text = text.upper()  # Convert to uppercase
@@ -165,7 +160,7 @@ def extract_choice(text):
     # Get context for each choice (20 chars before and after)
     for choice in choices:
         pos = text.find(choice)
-        context = text[max(0, pos - 20):min(len(text), pos + 20)]
+        context = text[max(0, pos-20):min(len(text), pos+20)]
 
         # Add points for keywords
         for keyword in keywords:
@@ -177,12 +172,11 @@ def extract_choice(text):
             choice_scores[choice] += 2
 
         # Add points if followed by punctuation
-        if pos < len(text) - 1 and text[pos + 1] in '。.!！,，':
+        if pos < len(text) - 1 and text[pos+1] in '。.!！,，':
             choice_scores[choice] += 1
 
     # Return highest scoring choice
     return max(choice_scores.items(), key=lambda x: x[1])[0]
-
 
 def evaluate_answer_similarity(student_answer, ground_truth):
     """Use llm to evaluate answer similarity."""
@@ -207,8 +201,7 @@ def evaluate_answer_similarity(student_answer, ground_truth):
     except Exception as e:
         print(f"Error in GPT evaluation: {e}")
         # If API call fails, fall back to simple text matching
-        return 1.0 if student_answer == ground_truth else 0.0
-
+        return 1.0 if student_answer ==ground_truth else 0.0
 
 def llm_reward(content, sol, **kwargs):
     # Extract answer from content if it has think/answer tags
@@ -219,7 +212,6 @@ def llm_reward(content, sol, **kwargs):
     content_matches = re.findall(r'<answer>(.*?)</answer>', content, re.DOTALL)
     student_answer = content_matches[-1].strip() if content_matches else content.strip()
     return evaluate_answer_similarity(student_answer, ground_truth)
-
 
 def mcq_reward(content, sol, **kwargs):
     # For multiple choice, extract and compare choices
@@ -259,7 +251,6 @@ def yes_no_reward(content, sol, **kwargs):
 
     return reward
 
-
 def calculate_map(pred_bbox_list, gt_bbox_list):
     # Calculate mAP
 
@@ -286,11 +277,10 @@ def calculate_map(pred_bbox_list, gt_bbox_list):
             cat_count += 1
 
         gt_json["annotations"].append({
-            "id": idx + 1,
+            "id": idx+1,
             "image_id": 0,
             "category_id": cats2id[gt_bbox["label"]],
-            "bbox": [gt_bbox["bbox_2d"][0], gt_bbox["bbox_2d"][1], gt_bbox["bbox_2d"][2] - gt_bbox["bbox_2d"][0],
-                     gt_bbox["bbox_2d"][3] - gt_bbox["bbox_2d"][1]],
+            "bbox": [gt_bbox["bbox_2d"][0], gt_bbox["bbox_2d"][1], gt_bbox["bbox_2d"][2] - gt_bbox["bbox_2d"][0], gt_bbox["bbox_2d"][3] - gt_bbox["bbox_2d"][1]],
             "area": (gt_bbox["bbox_2d"][2] - gt_bbox["bbox_2d"][0]) * (gt_bbox["bbox_2d"][3] - gt_bbox["bbox_2d"][1]),
             "iscrowd": 0
         })
@@ -302,12 +292,9 @@ def calculate_map(pred_bbox_list, gt_bbox_list):
             dt_json.append({
                 "image_id": 0,
                 "category_id": cats2id[pred_bbox["label"]],
-                "bbox": [pred_bbox["bbox_2d"][0], pred_bbox["bbox_2d"][1],
-                         pred_bbox["bbox_2d"][2] - pred_bbox["bbox_2d"][0],
-                         pred_bbox["bbox_2d"][3] - pred_bbox["bbox_2d"][1]],
+                "bbox": [pred_bbox["bbox_2d"][0], pred_bbox["bbox_2d"][1], pred_bbox["bbox_2d"][2] - pred_bbox["bbox_2d"][0], pred_bbox["bbox_2d"][3] - pred_bbox["bbox_2d"][1]],
                 "score": 1.0,
-                "area": (pred_bbox["bbox_2d"][2] - pred_bbox["bbox_2d"][0]) * (
-                        pred_bbox["bbox_2d"][3] - pred_bbox["bbox_2d"][1])
+                "area": (pred_bbox["bbox_2d"][2] - pred_bbox["bbox_2d"][0]) * (pred_bbox["bbox_2d"][3] - pred_bbox["bbox_2d"][1])
             })
         except:
             pass
@@ -322,7 +309,6 @@ def calculate_map(pred_bbox_list, gt_bbox_list):
     coco_eval.accumulate()
     coco_eval.summarize()
     return coco_eval.stats[1]
-
 
 def map_reward(content, sol, **kwargs):
     """
@@ -374,14 +360,10 @@ def numeric_reward(content, sol, **kwargs):
         return 1.0 if content == sol else 0.0
     except:
         return None
-
-
 def math_reward(content, sol, **kwargs):
     content = clean_text(content)
     sol = clean_text(sol)
     return compute_score(content, sol)
-
-
 def clean_text(text, exclue_chars=['\n', '\r']):
     # Extract content between <answer> and </answer> if present
     answer_matches = re.findall(r'<answer>(.*?)</answer>', text, re.DOTALL)
@@ -401,10 +383,9 @@ def clean_text(text, exclue_chars=['\n', '\r']):
     # Remove leading and trailing spaces and convert to lowercase
     return text.strip().rstrip('.').lower()
 
-
 def default_accuracy_reward(content, sol, **kwargs):
     reward = 0.0
-    # Extract answer from solution if it has think/answer tags
+        # Extract answer from solution if it has think/answer tags
     sol_match = re.search(r'<answer>(.*?)</answer>', sol)
     ground_truth = sol_match.group(1).strip() if sol_match else sol.strip()
 
@@ -447,7 +428,6 @@ def default_accuracy_reward(content, sol, **kwargs):
 
     return reward
 
-
 def accuracy_reward(completions, solution, **kwargs):
     """Reward function that checks if the completion is correct using symbolic verification, exact string matching, or fuzzy matching."""
     contents = [completion[0]["content"] for completion in completions]
@@ -482,6 +462,7 @@ def accuracy_reward(completions, solution, **kwargs):
                     f.write(f"Content: {content}\n")
                     f.write(f"Solution: {sol}\n")
 
+
     return rewards
 
 
@@ -508,11 +489,9 @@ reward_funcs_registry = {
     "format": format_reward,
 }
 
-
 @dataclass
 class GRPOModelConfig(ModelConfig):
     freeze_vision_modules: bool = False
-
 
 SYSTEM_PROMPT = (
     "A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant "
@@ -541,8 +520,8 @@ def main(script_args, training_args, model_args):
         accu_reward_methods = ["default"] * len(data_files)
     else:
         accu_reward_methods = script_args.reward_method.split(":")
-        assert len(accu_reward_methods) == len(
-            data_files), f"Number of reward methods must match number of data files: {len(accu_reward_methods)} != {len(data_files)}"
+        assert len(accu_reward_methods) == len(data_files), f"Number of reward methods must match number of data files: {len(accu_reward_methods)} != {len(data_files)}"
+
 
     if len(data_files) != len(image_folders):
         raise ValueError("Number of data files must match number of image folders")
@@ -555,7 +534,7 @@ def main(script_args, training_args, model_args):
                 if 'image' in item:
                     # Store image path instead of loading the image
                     item['image_path'] = os.path.join(image_folder, item['image'])
-                    del item['image']  # remove the image column so that it can be loaded later
+                    del item['image'] # remove the image column so that it can be loaded later
                 # Remove immediate image loading
                 item['problem'] = item['conversations'][0]['value'].replace('<image>', '')
 
@@ -568,11 +547,12 @@ def main(script_args, training_args, model_args):
                     item['solution'] = str(solution_value)
 
                 del item['conversations']
-                item['accu_reward_method'] = item.get('accu_reward_method',
-                                                      accu_reward_method)  # if accu_reward_method is in the data jsonl, use the value in the data jsonl, otherwise use the defined value
+                item['accu_reward_method'] = item.get('accu_reward_method', accu_reward_method) # if accu_reward_method is in the data jsonl, use the value in the data jsonl, otherwise use the defined value
                 all_data.append(item)
 
     dataset = Dataset.from_list(all_data)
+
+    QUESTION_TEMPLATE = "{Question}\n\nYour reasoning process inside <think> </think> should include a section 'Observation:' where you describe the current screentshot and a section 'Thought:' where you describe your thoughts on how to solve the given task.\nInside <answer> </answer> you should provide a section 'Action:' where you describe the steps you would take to solve the task and a section 'Command:' where you provide the corresponding low-level command(s) that should be executed next."
 
     def make_conversation_from_jsonl(example):
         if 'image_path' in example and example['image_path'] is not None:
@@ -586,9 +566,7 @@ def main(script_args, training_args, model_args):
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {'role': 'user', 'content': [
                         {'type': 'image', 'text': None},
-                        {'type': 'text', 'text': example['problem'] + \
-                                                 """\n Your reasoning process inside <think> </think> should include a section 'Observation:' where you describe the current screentshot and a section 'Thought:' where you describe your thoughts on how to solve the given task.\n
-                                                 Inside <answer> </answer> you should provide a section 'Action:' where you describe the steps you would take to solve the task and a section 'Command:' where you provide the corresponding low-level command that should be executed next."""}
+                        {'type': 'text', 'text': QUESTION_TEMPLATE.format(Question=example['problem'])}
                     ]
                      }]
             }
@@ -600,10 +578,7 @@ def main(script_args, training_args, model_args):
                 'prompt': [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {'role': 'user', 'content': [
-                        {'type': 'text', 'text': example['problem'] + \
-                                                 """\n Your reasoning process inside <think> </think> should include a section 'Observation:' where you describe the current screentshot and a section 'Thought:' where you describe your thoughts on how to solve the given task.\n
-                                                 Inside <answer> </answer> you should provide a section 'Action:' where you describe the steps you would take to solve the task and a section 'Command:' where you provide the corresponding low-level command that should be executed next."""}
-                    ]
+                        {'type': 'text', 'text': QUESTION_TEMPLATE.format(Question=example['problem'])}]
                      }]
             }
 
