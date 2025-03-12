@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import pprint
 import textwrap
 from collections import defaultdict
 from typing import Any, Callable, Optional, Union, Sized
@@ -610,6 +611,8 @@ class Qwen2VLGRPOTrainer(Trainer):
 
         # Decode the generated completions
         completions = self.processing_class.batch_decode(completion_ids, skip_special_tokens=True)
+        print("Completions:")
+        pprint.pp(completions)
         if is_conversational(inputs[0]):
             completions = [[{"role": "assistant", "content": completion}] for completion in completions]
 
