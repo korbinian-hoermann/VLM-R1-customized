@@ -563,7 +563,7 @@ def main(script_args, training_args, model_args):
                 'solution': f"<answer> {example['solution']} </answer>",
                 'accu_reward_method': example['accu_reward_method'],
                 'prompt': [
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    #{"role": "system", "content": SYSTEM_PROMPT},
                     {'role': 'user', 'content': [
                         {'type': 'image', 'text': None},
                         {'type': 'text', 'text': QUESTION_TEMPLATE.format(Question=example['problem'])}
@@ -576,7 +576,7 @@ def main(script_args, training_args, model_args):
                 'solution': f"<answer> {example['solution']} </answer>",
                 'accu_reward_method': example['accu_reward_method'],
                 'prompt': [
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    #{"role": "system", "content": SYSTEM_PROMPT},
                     {'role': 'user', 'content': [
                         {'type': 'text', 'text': QUESTION_TEMPLATE.format(Question=example['problem'])}]
                      }]
