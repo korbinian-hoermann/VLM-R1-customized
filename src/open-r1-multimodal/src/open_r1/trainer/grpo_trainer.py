@@ -14,6 +14,7 @@
 
 import os
 import pprint
+from IPython.display import display
 import textwrap
 from collections import defaultdict
 from typing import Any, Callable, Optional, Union, Sized
@@ -495,9 +496,16 @@ class Qwen2VLGRPOTrainer(Trainer):
         return inputs
 
     def _generate_and_score_completions(self, inputs: dict[str, Union[torch.Tensor, Any]], model) -> dict[str, Union[torch.Tensor, Any]]:
+        print("=" * 50)
+        print("Generating completions...")
+        print(inputs.keys())
+
         device = self.accelerator.device
         prompts = [x["prompt"] for x in inputs]
+        pprint.pp(prompts)
+        print("-"*50)
         prompts_text = [maybe_apply_chat_template(example, self.processing_class)["prompt"] for example in inputs]
+        pprint.pp(prompts_text)
         # Handle both pre-loaded images and image paths
         images = []
         for x in inputs:
@@ -520,6 +528,8 @@ class Qwen2VLGRPOTrainer(Trainer):
                     img = img.resize((new_w, new_h), PIL.Image.Resampling.LANCZOS)
             
                 images.append(img)
+                display(img)
+
             except:
                 pass
 
@@ -559,6 +569,9 @@ class Qwen2VLGRPOTrainer(Trainer):
 
         # Generate completions
         with unwrap_model_for_generation(model, self.accelerator) as unwrapped_model:
+            print("Prompt inputs:")
+            pprint.pp(prompt_inputs)
+
             prompt_completion_ids = unwrapped_model.generate(
                 **prompt_inputs, 
                 generation_config=self.generation_config
