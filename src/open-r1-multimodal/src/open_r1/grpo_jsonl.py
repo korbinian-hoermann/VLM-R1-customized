@@ -483,10 +483,54 @@ def format_reward(completions, **kwargs):
 
     return [1.0 if match else 0.0 for match in matches]
 
+def format_reward_custom(completions, **kwargs):
+    """
+    Reward function that checks if the completion exactly follows the expected output format:
 
+    <think>
+        Observation: ...
+        Thought: ...
+    </think>
+
+    <answer>
+        Action: ...
+        Command: ...
+    </answer>
+
+    It returns 1.0 if the format is correct, 0.0 otherwise.
+    """
+    pattern = (
+        r"^\s*"
+        r"<think>\s*"
+        r"Observation:\s*.*?\s*"
+        r"Thought:\s*.*?\s*"
+        r"</think>\s*"
+        r"<answer>\s*"
+        r"Action:\s*.*?\s*"
+        r"Command:\s*.*?\s*"
+        r"</answer>\s*"
+        r"$"
+    )
+
+    completion_contents = [completion[0]["content"] for completion in completions]
+    matches = [re.fullmatch(pattern, content, re.DOTALL) for content in completion_contents]
+
+    current_time = datetime.now().strftime("%d-%H-%M-%S-%f")
+    if os.getenv("DEBUG_MODE") == "true":
+        log_path = os.getenv("LOG_PATH")
+        with open(log_path.replace(".txt", "_format.txt"), "a", encoding="utf-8") as f:
+            f.write(f"------------- {current_time} Format reward -------------\n")
+            for content, match in zip(completion_contents, matches):
+                f.write(f"Content: {content}\n")
+                f.write(f"Has correct format: {bool(match)}\n")
+
+    return [1.0 if match else 0.0 for match in matches]
+
+# TODO: add the 2 VLM based evaluators
 reward_funcs_registry = {
     "accuracy": accuracy_reward,
     "format": format_reward,
+    "format_custom": format_reward_custom,
 }
 
 @dataclass
