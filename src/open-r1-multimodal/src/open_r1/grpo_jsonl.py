@@ -572,7 +572,7 @@ def main(script_args, training_args, model_args):
         else:
             return {
                 'problem': example['problem'],
-                'solution': f"<answer> {example['solution']} </answer>",
+                'solution': f"{example['solution']}",
                 'accu_reward_method': example['accu_reward_method'],
                 'prompt': [
                     #{"role": "system", "content": SYSTEM_PROMPT},
