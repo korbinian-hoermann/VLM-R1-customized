@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from babel.numbers import parse_decimal
 from utils.math import compute_score
+from utils.action_annotation import annotate_action
 from datasets import load_dataset, load_from_disk
 from transformers import Qwen2VLForConditionalGeneration
 
@@ -534,20 +535,29 @@ def format_reward_custom(completions, **kwargs):
 
 
 def low_level_action_reward(completions, **kwargs):
-    print("Computing low level action reward")
-    pprint.pp(kwargs)
 
-    image_path = kwargs.get("image_path")[0] if "image_path" in kwargs else None
-    # visualize image here
-    if image_path:
+    contents = [completion[0]["content"] for completion in completions]
+    rewards = []
+    
+    for content, image_path in zip(contents, kwargs.get("image_path")[0]):
+        # Extract answer from content if it has think/answer tags
+        content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
+        command = content_match.group(1).strip() if content_match else content.strip()
+
+        # Load image
         img = PIL.Image.open(image_path)
 
-        # resize image to half size
-        img = img.resize((img.width // 2, img.height // 2))
+        # Annotate image with predicted actions
+        annotated_img = annotate_action(img, command)
 
-        display(img)
+        # Display annotated image
+        display(annotated_img)
 
-    return 0
+        # TODO: add VLM call
+        reward = 0
+        rewards.append(reward)
+
+    return rewards
 
 # TODO: add the 2 VLM based evaluators
 reward_funcs_registry = {
