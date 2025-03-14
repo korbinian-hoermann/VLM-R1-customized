@@ -52,6 +52,8 @@ def annotate_action(actions: str, screenshot: Image) -> Image:
     print(f"Annotating screenshot with the generated low-level action...")
     print(f"Actions: {actions}")
 
+    annotated_screenshot = None
+
     for action in actions.split("\n"):
         print(f"\tCreating annotation for action: {action}")
         if action.startswith("pyautogui.click"):
@@ -64,7 +66,7 @@ def annotate_action(actions: str, screenshot: Image) -> Image:
             x, y = convert_scroll(action)
             screenshot = annotate_scroll(x, y, screenshot)
 
-    return screenshot
+    return annotated_screenshot
 
 def extract_x_y(action: str) -> Tuple[int, int]:
     """
@@ -72,7 +74,7 @@ def extract_x_y(action: str) -> Tuple[int, int]:
     """
 
     # Extract the x and y coordinates
-    pattern = r"pyautogui\.click\s*\(\s*x\s*=\s*([-+]?\d*\.?\d+)\s*,\s*y\s*=\s*([-+]?\d*\.?\d+)\s*\)"
+    pattern = r"pyautogui\.(?:click|moveTo)\s*\(\s*x\s*=\s*([-+]?\d*\.?\d+)\s*,\s*y\s*=\s*([-+]?\d*\.?\d+)\s*\)"
     match = re.search(pattern, action)
     if match is None:
         return None, None
