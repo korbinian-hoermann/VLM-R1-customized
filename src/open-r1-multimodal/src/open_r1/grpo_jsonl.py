@@ -28,6 +28,7 @@ from math_verify import parse, verify
 from open_r1.trainer import Qwen2VLGRPOTrainer, GRPOConfig
 from trl import ModelConfig, ScriptArguments, TrlParser, get_peft_config
 import PIL
+from IPython.display import display
 from Levenshtein import ratio
 from open_r1.utils.pycocotools.coco import COCO
 from open_r1.utils.pycocotools.cocoeval import COCOeval
@@ -108,7 +109,7 @@ class GRPOScriptArguments(ScriptArguments):
         metadata={"help": "Ratio of validation split, default 0.0"},
     )
     reward_funcs: list[str] = field(
-        default_factory=lambda: ["accuracy", "format"],
+        default_factory=lambda: ["accuracy", "format", "low_level_action_reward", "format_reward_custom"],
         metadata={"help": "List of reward functions. Possible values: 'accuracy', 'format'"},
     )
     max_pixels: Optional[int] = field(
@@ -535,6 +536,17 @@ def format_reward_custom(completions, **kwargs):
 def low_level_action_reward(completions, **kwargs):
     print("Computing low level action reward")
     pprint.pp(kwargs)
+
+    image_path = kwargs.get("image_path")[0] if "image_path" in kwargs else None
+    # visualize image here
+    if image_path:
+        img = PIL.Image.open(image_path)
+
+        # resize image to half size
+        img = img.resize((img.width // 2, img.height // 2))
+
+        display(img)
+
     return 0
 
 # TODO: add the 2 VLM based evaluators
