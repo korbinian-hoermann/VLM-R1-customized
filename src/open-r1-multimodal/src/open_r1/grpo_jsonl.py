@@ -555,6 +555,7 @@ def low_level_action_reward(completions, image_path, **kwargs):
 
         # Load image
         img = PIL.Image.open(image_path)
+        print("Image size:", img.size)
 
         # Annotate image with predicted actions
         annotated_img = annotate_action(screenshot=img, actions=command)

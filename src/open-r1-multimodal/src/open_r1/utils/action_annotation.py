@@ -87,6 +87,7 @@ def annotate_click(x, y, image):
     :return:
     """
 
+    print(f"Annotating click at ({x}, {y})")
     x, y = float(x), float(y)
 
     radius = min(image.width, image.height) // 15
@@ -94,6 +95,10 @@ def annotate_click(x, y, image):
     # scale x, y to 0-1000 range depending on image size
     x = int(x * image.width)
     y = int(y * image.height)
+
+    # Draw a red circle at the specified coordinates
+    print(f"Drawing red circle at ({x}, {y})")
+
     Draw(image).ellipse((x - radius, y - radius, x + radius, y + radius), outline='red', width=2)
     Draw(image).ellipse((x - 2, y - 2, x + 2, y + 2), fill='red')
 
