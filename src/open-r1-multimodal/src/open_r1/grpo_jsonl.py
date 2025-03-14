@@ -534,15 +534,23 @@ def format_reward_custom(completions, **kwargs):
     return [1.0 if match else 0.0 for match in matches]
 
 
-def low_level_action_reward(completions, **kwargs):
+def low_level_action_reward(completions, image_paths, **kwargs):
+
+    print("Computing low level action reward")
 
     contents = [completion[0]["content"] for completion in completions]
     rewards = []
     
-    for content, image_path in zip(contents, kwargs.get("image_path")[0]):
+    for content, image_path in zip(contents, image_paths):
+
+        print("Content:", content)
+        print("Image path:", image_path)
+
         # Extract answer from content if it has think/answer tags
         content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
         command = content_match.group(1).strip() if content_match else content.strip()
+
+        print("Command:", command)
 
         # Load image
         img = PIL.Image.open(image_path)
