@@ -58,13 +58,13 @@ def annotate_action(actions: str, screenshot: Image) -> Image:
         print(f"\tCreating annotation for action: {action}")
         if action.startswith("pyautogui.click"):
             x, y = extract_x_y(action)
-            screenshot = annotate_click(x, y, screenshot)
+            annotated_screenshot = annotate_click(x, y, screenshot)
         elif action.startswith("pyautogui.moveTo"):
             x, y = extract_x_y(action)
-            screenshot = annotate_move(x, y, screenshot)
+            annotated_screenshot = annotate_move(x, y, screenshot)
         elif action.startswith("pyautogui.scroll"):
             x, y = convert_scroll(action)
-            screenshot = annotate_scroll(x, y, screenshot)
+            annotated_screenshot = annotate_scroll(x, y, screenshot)
 
     return annotated_screenshot
 
