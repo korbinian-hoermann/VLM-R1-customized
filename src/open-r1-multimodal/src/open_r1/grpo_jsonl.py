@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import pprint
 import re
 import pathlib
 from datetime import datetime
@@ -430,6 +431,10 @@ def default_accuracy_reward(content, sol, **kwargs):
 
 def accuracy_reward(completions, solution, **kwargs):
     """Reward function that checks if the completion is correct using symbolic verification, exact string matching, or fuzzy matching."""
+
+    print("Computing accuracy reward")
+    pprint.pp(kwargs)
+
     contents = [completion[0]["content"] for completion in completions]
     rewards = []
     for content, sol, accu_reward_method in zip(contents, solution, kwargs.get("accu_reward_method")):
@@ -526,11 +531,18 @@ def format_reward_custom(completions, **kwargs):
 
     return [1.0 if match else 0.0 for match in matches]
 
+
+def low_level_action_reward(completions, **kwargs):
+    print("Computing low level action reward")
+    pprint.pp(kwargs)
+    return 0
+
 # TODO: add the 2 VLM based evaluators
 reward_funcs_registry = {
     "accuracy": accuracy_reward,
     "format": format_reward,
     "format_custom": format_reward_custom,
+    "low_level_action_reward": low_level_action_reward
 }
 
 @dataclass
