@@ -537,7 +537,7 @@ def format_reward_custom(completions, **kwargs):
 def low_level_action_reward(completions, image_path, **kwargs):
 
     print("Computing low level action reward")
-    print(**kwargs)
+    pprint.pp(kwargs)
     print(image_path)
     contents = [completion[0]["content"] for completion in completions]
     rewards = []
