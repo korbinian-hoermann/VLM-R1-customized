@@ -550,6 +550,7 @@ def low_level_action_reward(completions, image_path, **kwargs):
         # Extract answer from content if it has think/answer tags
         content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
         command = content_match.group(1).strip() if content_match else content.strip()
+        command = command.split("Command:")[1].strip()
 
         print("Command:", command)
 
