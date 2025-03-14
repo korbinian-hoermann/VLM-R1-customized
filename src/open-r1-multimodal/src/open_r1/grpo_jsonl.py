@@ -534,14 +534,15 @@ def format_reward_custom(completions, **kwargs):
     return [1.0 if match else 0.0 for match in matches]
 
 
-def low_level_action_reward(completions, image_paths, **kwargs):
+def low_level_action_reward(completions, image_path, **kwargs):
 
     print("Computing low level action reward")
-
+    print(**kwargs)
+    print(image_path)
     contents = [completion[0]["content"] for completion in completions]
     rewards = []
     
-    for content, image_path in zip(contents, image_paths):
+    for content, image_path in zip(contents, image_path):
 
         print("Content:", content)
         print("Image path:", image_path)
