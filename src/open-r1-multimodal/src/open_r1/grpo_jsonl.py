@@ -435,7 +435,6 @@ def accuracy_reward(completions, solution, **kwargs):
     """Reward function that checks if the completion is correct using symbolic verification, exact string matching, or fuzzy matching."""
 
     print("Computing accuracy reward")
-    pprint.pp(kwargs)
 
     contents = [completion[0]["content"] for completion in completions]
     rewards = []
@@ -537,7 +536,6 @@ def format_reward_custom(completions, **kwargs):
 def low_level_action_reward(completions, image_path, **kwargs):
 
     print("Computing low level action reward")
-    pprint.pp(kwargs)
     print(image_path)
     contents = [completion[0]["content"] for completion in completions]
     rewards = []

@@ -89,6 +89,8 @@ def annotate_click(x, y, image):
     :return:
     """
 
+    color = "red"
+    action = "Click"
     print(f"Annotating click at ({x}, {y})")
     x, y = float(x), float(y)
 
@@ -101,23 +103,59 @@ def annotate_click(x, y, image):
     # Draw a red circle at the specified coordinates
     print(f"Drawing red circle at ({x}, {y})")
 
-    Draw(image).ellipse((x - radius, y - radius, x + radius, y + radius), outline='red', width=2)
-    Draw(image).ellipse((x - 2, y - 2, x + 2, y + 2), fill='red')
+    Draw(image).ellipse((x - radius, y - radius, x + radius, y + radius), outline=color, width=2)
+    Draw(image).ellipse((x - 2, y - 2, x + 2, y + 2), fill=color)
+
+    # Add label to the circle, indicating the action. make sure the label is visible (inside the image)
+    if x + 10 < image.width and y + 10 < image.height:
+        Draw(image).text((x+10, y+10), action, fill=color)
+
+    elif x - 10 > 0 and y - 10 > 0:
+        Draw(image).text((x-10, y-10), action, fill=color)
+
+    elif x + 10 < image.width and y - 10 > 0:
+        Draw(image).text((x+10, y-10), action, fill=color)
+
+    elif x - 10 > 0 and y + 10 < image.height:
+        Draw(image).text((x-10, y+10), action, fill=color)
+
 
     return image
 
-def annotate_move(x: int, y: int, screenshot: Image) -> Image:
+def annotate_move(x: int, y: int, image: Image) -> Image:
     """
     Annotate the screenshot with the move action by drawing a blue circle at the specified coordinates.
     """
 
-    # Draw a blue circle at the specified coordinates
-    draw = ImageDraw(screenshot)
-    draw.circle((x, y), 2, fill="blue")
-    draw.ellipse((x-10, y-10, x+10, y+10), outline="blue")
-    draw.text((x+10, y+10), "MoveTo", fill="blue")
+    print(f"Annotating moveTo at ({x}, {y})")
+    x, y = float(x), float(y)
 
-    return screenshot
+    radius = min(image.width, image.height) // 15
+
+    # scale x, y to 0-1000 range depending on image size
+    x = int(x * image.width)
+    y = int(y * image.height)
+
+    # Draw a red circle at the specified coordinates
+    print(f"Drawing blue circle at ({x}, {y})")
+
+    Draw(image).ellipse((x - radius, y - radius, x + radius, y + radius), outline='blue', width=2)
+    Draw(image).ellipse((x - 2, y - 2, x + 2, y + 2), fill='blue', )
+
+    # Add label to the circle, indicating the action. make sure the label is visible (inside the image)
+    if x + 10 < image.width and y + 10 < image.height:
+        Draw(image).text((x+10, y+10), "MoveTo", fill="blue")
+
+    elif x - 10 > 0 and y - 10 > 0:
+        Draw(image).text((x-10, y-10), "MoveTo", fill="blue")
+
+    elif x + 10 < image.width and y - 10 > 0:
+        Draw(image).text((x+10, y-10), "MoveTo", fill="blue")
+
+    elif x - 10 > 0 and y + 10 < image.height:
+        Draw(image).text((x-10, y+10), "MoveTo", fill="blue")
+
+    return image
 
 def annotate_scroll(x, y, screenshot: Image) -> Image:
     """
