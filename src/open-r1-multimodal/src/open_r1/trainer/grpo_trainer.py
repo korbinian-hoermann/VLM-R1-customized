@@ -496,17 +496,19 @@ class Qwen2VLGRPOTrainer(Trainer):
         return inputs
 
     def _generate_and_score_completions(self, inputs: dict[str, Union[torch.Tensor, Any]], model) -> dict[str, Union[torch.Tensor, Any]]:
+        print("\n\n")
         print("=" * 50)
         print("Generating completions...")
-        print("1. Initial inputs:")
+        print("=" * 50)
+        print("\n\n")
+
+        print("\n\n1. Initial inputs:")
         pprint.pp(inputs)
 
         device = self.accelerator.device
         prompts = [x["prompt"] for x in inputs]
-        print("2. Prompts:")
-        pprint.pp(prompts)
         prompts_text = [maybe_apply_chat_template(example, self.processing_class)["prompt"] for example in inputs]
-        print("3. Prompts text (after chat template?):")
+        print("\n\n3. Prompts text (after chat template?):")
         pprint.pp(prompts_text)
         # Handle both pre-loaded images and image paths
         images = []
@@ -624,13 +626,19 @@ class Qwen2VLGRPOTrainer(Trainer):
 
         # Decode the generated completions
         completions = self.processing_class.batch_decode(completion_ids, skip_special_tokens=True)
-        print("5. Completions:")
+        print("\n\n5. Completions:")
         pprint.pp(completions)
         if is_conversational(inputs[0]):
             completions = [[{"role": "assistant", "content": completion}] for completion in completions]
 
         # Compute the rewards
         # No need to duplicate prompts as we're not generating multiple completions per prompt
+
+        print(f"\n\n")
+        print(f"="*100)
+        print("### Computing Rewards")
+        print(f"="*100)
+        print(f"\n\n")
 
         rewards_per_func = torch.zeros(len(prompts), len(self.reward_funcs), device=device)
         for i, (reward_func, reward_processing_class) in enumerate(
