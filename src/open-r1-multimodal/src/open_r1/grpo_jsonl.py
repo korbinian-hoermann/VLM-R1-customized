@@ -632,15 +632,6 @@ def main(script_args, training_args, model_args):
 
     dataset = Dataset.from_list(all_data)
 
-    SYSTEM_PROMPT = (
-        "A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant "
-        "first thinks about the reasoning process in the mind and then provides the user with the answer. The reasoning "
-        "process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., "
-        "<think> reasoning process here </think><answer> answer here </answer>"
-    )
-
-    QUESTION_TEMPLATE = "[System: {System}]\n\n{Question}\n\nYour reasoning process inside <think> </think> should include a section 'Observation:' where you describe the current screentshot and a section 'Thought:' where you describe your thoughts on how to solve the given task.\nInside <answer> </answer> you should provide a section 'Action:' where you describe the steps you would take to solve the task and a section 'Command:' where you provide the corresponding low-level command(s) that should be executed next."
-
     def make_conversation_from_jsonl(example):
         if 'image_path' in example and example['image_path'] is not None:
             # Don't load image here, just store the path
@@ -652,7 +643,7 @@ def main(script_args, training_args, model_args):
                 'prompt': [
                     {'role': 'user', 'content': [
                         {'type': 'image', 'text': None},
-                        {'type': 'text', 'text': QUESTION_TEMPLATE.format(System=SYSTEM_PROMPT, Question=example['problem'])}
+                        {'type': 'text', 'text': example['problem']}
                     ]
                      }]
             }
@@ -662,9 +653,8 @@ def main(script_args, training_args, model_args):
                 'solution': f"{example['solution']}",
                 'accu_reward_method': example['accu_reward_method'],
                 'prompt': [
-                    #{"role": "system", "content": SYSTEM_PROMPT},
                     {'role': 'user', 'content': [
-                        {'type': 'text', 'text': QUESTION_TEMPLATE.format(Question=example['problem'])}]
+                        {'type': 'text', 'text': example['problem']}]
                      }]
             }
 
