@@ -118,16 +118,16 @@ def annotate_click(x, y, image):
 
     # Add label to the circle, indicating the action. make sure the label is visible (inside the image)
     if x + 10 < image.width and y + 10 < image.height:
-        Draw(image).text((x + 10, y + 10), action, fill=color)
+        Draw(image).text((x + 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
     elif x - 10 > 0 and y - 10 > 0:
-        Draw(image).text((x - 10, y - 10), action, fill=color)
+        Draw(image).text((x - 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
     elif x + 10 < image.width and y - 10 > 0:
-        Draw(image).text((x + 10, y - 10), action, fill=color)
+        Draw(image).text((x + 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
     elif x - 10 > 0 and y + 10 < image.height:
-        Draw(image).text((x - 10, y + 10), action, fill=color)
+        Draw(image).text((x - 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
     return image
 
@@ -163,16 +163,16 @@ def annotate_move(x: int, y: int, image: Image) -> Image:
 
     # Add label to the circle, indicating the action. make sure the label is visible (inside the image)
     if x + 10 < image.width and y + 10 < image.height:
-        Draw(image).text((x + 10, y + 10), action, fill=color)
+        Draw(image).text((x + 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
     elif x - 10 > 0 and y - 10 > 0:
-        Draw(image).text((x - 10, y - 10), action, fill=color)
+        Draw(image).text((x - 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
     elif x + 10 < image.width and y - 10 > 0:
-        Draw(image).text((x + 10, y - 10), action, fill=color)
+        Draw(image).text((x + 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
     elif x - 10 > 0 and y + 10 < image.height:
-        Draw(image).text((x - 10, y + 10), action, fill=color)
+        Draw(image).text((x - 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
     return image
 
@@ -212,7 +212,7 @@ def annotate_scroll(x, y, screenshot: Image) -> Image:
     end_y = center_y + y * factor
 
     # Create a drawing context
-    draw = ImageDraw.Draw(screenshot)
+    draw = ImageDraw(screenshot)
 
     # Calculate arrow head position and direction
     arrow_length = 15
