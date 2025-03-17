@@ -542,6 +542,7 @@ async def _low_level_action_reward(completions, image_path, problem, **kwargs):
 
     print("Computing low level action reward")
     contents = [completion[0]["content"] for completion in completions]
+    print("problem:", problem)
 
     tasks = []
     results = []
@@ -550,6 +551,7 @@ async def _low_level_action_reward(completions, image_path, problem, **kwargs):
 
         print("\n")
         print("Content:", content)
+        print("Problem:", problem)
         print("\n")
         # Extract answer from content if it has think/answer tags
         content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
