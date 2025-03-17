@@ -538,7 +538,7 @@ def format_reward_custom(completions, **kwargs):
     return [1.0 if match else 0.0 for match in matches]
 
 
-async def _low_level_action_reward(completions, image_path, problem, **kwargs):
+async def low_level_action_reward(completions, image_path, problem, **kwargs):
 
     print("Computing low level action reward")
     contents = [completion[0]["content"] for completion in completions]
@@ -582,8 +582,8 @@ async def _low_level_action_reward(completions, image_path, problem, **kwargs):
         print("\n\n")
 
     for task, annotated_img, high_level_action, low_level_action, previous_actions in tasks:
-        async with semaphore:
-            results.append(evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions))
+        #async with semaphore:
+        results.append(evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions))
 
     final_resulst = await asyncio.gather(*results)
     print("final_resulst:", final_resulst)
@@ -594,7 +594,7 @@ async def _low_level_action_reward(completions, image_path, problem, **kwargs):
 import asyncio
 import nest_asyncio
 
-def low_level_action_reward(completions, image_path, problem, **kwargs):
+'''def low_level_action_reward(completions, image_path, problem, **kwargs):
     """
     Synchronous wrapper for the asynchronous low-level action reward.
     It will run the async function _low_level_action_reward and wait for its result.
@@ -615,7 +615,7 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
     return asyncio.run(
         _low_level_action_reward(completions, image_path, problem, **kwargs)
     )
-
+'''
 
 # TODO: add the 2 VLM based evaluators
 reward_funcs_registry = {
