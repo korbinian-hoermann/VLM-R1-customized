@@ -67,7 +67,7 @@ final_rating:
 
 
 
-async def evaluate_low_level_action(
+def evaluate_low_level_action(
         client,
         goal: str,
         screenshot: 'Image', # PIL Image object
@@ -100,7 +100,7 @@ async def evaluate_low_level_action(
 
     for attempt in range(2):  # Try up to 2 times
         try:
-            response = await client.beta.chat.completions.parse(
+            response = client.beta.chat.completions.parse(
                 model="gpt-4o-2024-08-06",
                 messages=[
                     {"role": "system", "content": prompt},
