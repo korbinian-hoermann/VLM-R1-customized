@@ -41,6 +41,8 @@ import torch
 from typing import Tuple
 from transformers.utils import logging
 
+from utils.reward_model_prompts import evaluate_low_level_action
+
 from openai import OpenAI
 
 logger = logging.get_logger(__name__)
@@ -533,7 +535,7 @@ def format_reward_custom(completions, **kwargs):
     return [1.0 if match else 0.0 for match in matches]
 
 
-def low_level_action_reward(completions, image_path, **kwargs):
+def low_level_action_reward(completions, image_path, problem, **kwargs):
 
     print("Computing low level action reward")
     contents = [completion[0]["content"] for completion in completions]
@@ -547,23 +549,34 @@ def low_level_action_reward(completions, image_path, **kwargs):
         # Extract answer from content if it has think/answer tags
         content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
         command = content_match.group(1).strip() if content_match else content.strip()
-        command = command.split("Command:")[1].strip()
 
-        print("Extracted command:\n", command)
+        previous_actions = problem.lower().split("previous actions:").split("\n\n\n")[0].strip()
+        task = problem.lower().split("instruction:")[1].strip().split("\n")[0].strip()
+
+        high_level_action = command.split("Action:")[1].strip().split("\n")[0].strip()
+        low_level_action = command.split("Command:")[1].strip()
+
+        print("task:\n", task)
+        print("previous_actions:\n", previous_actions)
+        print("high_level_action:\n", high_level_action)
+        print("low_level_action:\n", low_level_action)
 
         # Load image
         img = PIL.Image.open(image_path)
         print("Image size:", img.size)
 
         # Annotate image with predicted actions
-        annotated_img = annotate_action(screenshot=img, actions=command)
+        annotated_img = annotate_action(screenshot=img, actions=low_level_action)
 
         # Display annotated image
         display(annotated_img)
         print("\n\n")
 
-        # TODO: add VLM call
-        reward = 0
+        reasoning, final_rating = evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions)
+        print("Reasoning:", reasoning)
+        print("Final rating:", final_rating)
+
+        reward = final_rating
         rewards.append(reward)
 
     return rewards

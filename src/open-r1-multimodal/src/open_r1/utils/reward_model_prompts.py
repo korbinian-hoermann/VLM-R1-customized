@@ -1,0 +1,134 @@
+from pydantic import BaseModel
+import os
+import base64
+import io
+from typing import Tuple
+from openai import AsyncOpenAI
+
+class LowLevelActionResponseFormat(BaseModel):
+    reasoning: str
+    final_rating: int
+
+LOW_LEVEL_ACTION_EVALUATION_SYSTEM_PROMPT = """
+# Role
+You are a process reward model that evaluates whether a low-level action of a web agent (e.g., click(x, y), press("Enter"), ...) properly executes a high-level action (e.g., "click the login button"). 
+
+The web agent has access to the following low-level actions: 
+
+- {"name": "pyautogui.press", "description": "Presses the specified keyboard key(s). Can press a single key or a sequence of keys.", "parameters": {"type": "object", "properties": {"keys": {"type": "array", "items":{"type": "string"}, "description": "A string or list of strings representing the key(s) to press.  Examples: 'enter', 'esc', ['shift', 'tab'], 'ctrl', 'a'."}}, "required": ["keys"]}}
+- {"name": "pyautogui.click", "description": "Clicks the mouse at the specified (x, y) coordinates.  If no coordinates are provided, clicks at the current mouse position.", "parameters": {"type": "object", "properties": {"x": {"type": "number", "description": "The x-coordinate to click."}, "y": {"type": "number", "description": "The y-coordinate to click."}}, "required": []}}
+- {"name": "pyautogui.moveTo", "description": "Moves the mouse cursor to the specified (x, y) coordinates.", "parameters": {"type": "object", "properties": {"x": {"type": "number", "description": "The x-coordinate to move to."}, "y": {"type": "number", "description": "The y-coordinate to move to."}}, "required": ["x", "y"]}}
+- {"name": "pyautogui.write", "description": "Types the given text at the current cursor position.", "parameters": {"type": "object", "properties": {"message": {"type": "string", "description": "The text to type."}}, "required": ["message"]}}
+- {"name": "pyautogui.scroll", "description": "Scrolls the mouse wheel up or down.  Positive values scroll up, negative values scroll down.", "parameters": {"type": "object", "properties": {"page": { "type": "number", "description": "number of pages to scroll down (negative) or up (positive)"}}, "required": ["page"]}}
+- {"name": "answer", "description": "Answer a question", "parameters": {"type": "object", "properties": {"answer": {"type": "string", "description": "The answer to the question"}}, "required": ["answer"]}}
+
+# Instructions
+
+    Inputs:
+
+        Goal: The agent’s objective (e.g., "Book a flight").
+        
+        High-Level Action: The intended action (e.g., "click the checkout button").
+        
+        Low-Level Action: The proposed action to execute (e.g., pyautogui.click(320, 200)).
+
+        Screenshot: A screenshot of the current UI state. 
+                    For the actions pyautogui.click pyautogui.moveTo and pyautogui.scroll, the screenshot will have a red annotations with black border to indicate the target of the action.
+                    
+        Previous Actions: List of prior steps.
+
+
+    Your task:
+    Evaluate whether the low-level action directly executes the high-level action based on the current screenshot.
+
+        Yes (Rating = 1):
+            
+            The chosen low-level action correctly executes the high-level action based on the current screenshot.
+            If the screenshot includes annotations, check if they match the target of the high-level action. 
+            In case of an answer action, ensure the content of the answer is grounded in the screenshot or previous actions.
+            Further, an answer action represents the final output of the agent. Make sure it is correct and relevant to the goal. 
+            
+
+        No (Rating = 0):
+        
+            The low-level action does not directly execute the high-level action based on the current screenshot.
+
+
+# Example Response
+
+reasoning: 
+The high-level action is to click "Submit". The low-level action `pyautogui.click(150, 300)` is the right action type. 
+But the annotated click action in the screenshot is not targeting the "Submit" button.
+
+final_rating: 
+0
+
+"""
+
+
+
+async def evaluate_low_level_action(
+        client,
+        goal: str,
+        screenshot: 'Image', # PIL Image object
+        high_level_actions: str,
+        low_level_actions: str,
+        previous_actions: str,
+) -> Tuple[str, int]:
+
+
+    print("Annotating screenshot with the generated low-level action...")
+
+
+    # Convert PIL Image to base64
+    buffered = io.BytesIO()
+    screenshot.save(buffered, format="PNG")
+    image_data = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    prompt = LOW_LEVEL_ACTION_EVALUATION_SYSTEM_PROMPT.strip()
+
+    evaluation_input = f"""Your evaluation task: 
+    
+    Goal: {goal}
+    Generated High-Level Action: {high_level_actions}
+    Generated Low-Level Action: {low_level_actions}
+    Screenshot: <image>
+    Previous Actions: {previous_actions}
+    
+    """
+
+    prompt = prompt + "\n\n" + evaluation_input
+
+    for attempt in range(2):  # Try up to 2 times
+        try:
+            response = await client.beta.chat.completions.parse(
+                model="gpt-4o-2024-08-06",
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user",
+                     "content": [
+                         {"type": "text", "text": evaluation_input},
+                         {"type": "image_url",
+                          "image_url": {
+                              "url": f"data:image/jpeg;base64,{image_data}",
+                          }}
+                     ]}
+                ],
+                temperature=0.0,  # Use deterministic output for consistent evaluation
+                max_tokens=1000,
+                response_format=LowLevelActionResponseFormat
+            )
+
+            reasoning, final_rating = response.choices[0].message.parsed
+
+            return reasoning, final_rating
+
+        except Exception as e:
+            if attempt == 0:  # First attempt failed
+                print(f"Error during evaluation (attempt {attempt + 1}): {str(e)}")
+                print("Retrying evaluation...")
+                continue
+
+            else:  # Second attempt failed
+                print(f"Error during evaluation (attempt {attempt + 1}): {str(e)}")
+                # Return a neutral rating after all retries failed
+                return "Error during evaluation", 0
