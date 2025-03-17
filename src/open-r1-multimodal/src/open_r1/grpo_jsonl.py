@@ -615,7 +615,6 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
         _low_level_action_reward(completions, image_path, problem, **kwargs)
     )
 
-    )
 
 # TODO: add the 2 VLM based evaluators
 reward_funcs_registry = {
