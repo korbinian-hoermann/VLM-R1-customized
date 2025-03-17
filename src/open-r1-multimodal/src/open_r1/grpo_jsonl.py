@@ -538,7 +538,7 @@ def format_reward_custom(completions, **kwargs):
     return [1.0 if match else 0.0 for match in matches]
 
 
-async def low_level_action_reward(completions, image_path, problem, **kwargs):
+async def _low_level_action_reward(completions, image_path, problem, **kwargs):
 
     print("Computing low level action reward")
     contents = [completion[0]["content"] for completion in completions]
@@ -590,6 +590,11 @@ async def low_level_action_reward(completions, image_path, problem, **kwargs):
 
     return rewards
 
+# Then, define a synchronous wrapper:
+def low_level_action_reward(completions, image_path, problem, **kwargs):
+    # This will run the asynchronous _low_level_action_reward and wait for its result.
+    return asyncio.run(_low_level_action_reward(completions, image_path, problem, **kwargs))
+
 # TODO: add the 2 VLM based evaluators
 reward_funcs_registry = {
     "accuracy": accuracy_reward,
@@ -597,6 +602,8 @@ reward_funcs_registry = {
     "format_custom": format_reward_custom,
     "low_level_action_reward": low_level_action_reward
 }
+
+
 
 @dataclass
 class GRPOModelConfig(ModelConfig):
