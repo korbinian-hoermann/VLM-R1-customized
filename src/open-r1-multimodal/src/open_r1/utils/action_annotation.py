@@ -25,7 +25,7 @@ import re
 import math
 
 
-def convert_scroll(action):
+def convert_scroll(action, screenshot: Image):
     """
     Convert the scroll action of the form: pyautogui.scroll(page=-0.28) to x and y coordinates.
     """
@@ -34,7 +34,7 @@ def convert_scroll(action):
     if match is None:
         return None, None
 
-    page = float(match.group(1)) * 720
+    page = float(match.group(1)) * screenshot.width
 
     # Positive page value means scroll up (negative y)
     # Negative page value means scroll down (positive y)
@@ -63,7 +63,7 @@ def annotate_action(actions: str, screenshot: Image) -> Image:
             x, y = extract_x_y(action)
             annotated_screenshot = annotate_move(x, y, screenshot)
         elif action.startswith("pyautogui.scroll"):
-            x, y = convert_scroll(action)
+            x, y = convert_scroll(action, screenshot)
             annotated_screenshot = annotate_scroll(x, y, screenshot)
 
     return annotated_screenshot
@@ -159,12 +159,38 @@ def annotate_move(x: int, y: int, image: Image) -> Image:
 
     return image
 
+def compute_scaling_factor(cx, cy, dx, dy, width, height, margin=15):
+    factors = []
+    # For horizontal direction
+    if dx > 0:
+        factors.append((width - margin - cx) / dx)
+    elif dx < 0:
+        factors.append((cx - margin) / abs(dx))
+    else:
+        factors.append(float('inf'))
+    # For vertical direction
+    if dy > 0:
+        factors.append((height - margin - cy) / dy)
+    elif dy < 0:
+        factors.append((cy - margin) / abs(dy))
+    else:
+        factors.append(float('inf'))
+    # Do not scale up if the arrow is already within bounds
+    return min(1, *factors)
+
 def annotate_scroll(x, y, screenshot: Image) -> Image:
     """
     Annotate the screenshot with the scroll action by drawing an arrow.
     """
-    center_x, center_y = 1200/2, 720/2
-    end_x, end_y = center_x + x, center_y + y
+
+    margin = 15
+    # Use the proper center of the image: (width/2, height/2)
+    center_x, center_y = screenshot.width // 2, screenshot.height // 2
+
+    # Calculate the scaling factor to ensure the arrow stays inside the image boundaries
+    factor = compute_scaling_factor(center_x, center_y, x, y, screenshot.width, screenshot.height, margin)
+    end_x = center_x + x * factor
+    end_y = center_y + y * factor
 
     draw = ImageDraw(screenshot)
     # Draw the main arrow line
@@ -172,23 +198,17 @@ def annotate_scroll(x, y, screenshot: Image) -> Image:
 
     # Calculate arrow head position and direction
     arrow_length = 15
-    arrow_width = 8
-
-    # Calculate angle of the line
-    angle = math.atan2(y, x)
-
-    # Calculate arrow head points
+    angle = math.atan2(y * factor, x * factor)
     left_x = end_x - arrow_length * math.cos(angle + math.pi/6)
     left_y = end_y - arrow_length * math.sin(angle + math.pi/6)
     right_x = end_x - arrow_length * math.cos(angle - math.pi/6)
     right_y = end_y - arrow_length * math.sin(angle - math.pi/6)
 
-    # Draw arrow head
+    # Draw the arrow head
     draw.line((end_x, end_y, left_x, left_y), fill="black", width=2)
     draw.line((end_x, end_y, right_x, right_y), fill="black", width=2)
 
-    # Add label
-    draw.text((end_x+10, end_y+10), f"Scroll page ({y/720})", fill="black")
+    draw.text((center_x+10, center_y+10), f"Scroll page ({y/screenshot.width:.2f})", fill="black")
 
     return screenshot
 
