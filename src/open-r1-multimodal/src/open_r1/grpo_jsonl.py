@@ -583,8 +583,7 @@ async def _low_level_action_reward(completions, image_path, problem, **kwargs):
 
     for task, annotated_img, high_level_action, low_level_action, previous_actions in tasks:
         async with semaphore:
-            results.append(await evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions))
-
+            results.append(evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions))
 
     final_resulst = await asyncio.gather(*results)
     print("final_resulst:", final_resulst)
