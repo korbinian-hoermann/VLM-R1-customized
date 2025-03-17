@@ -34,6 +34,7 @@ from Levenshtein import ratio
 from open_r1.utils.pycocotools.coco import COCO
 from open_r1.utils.pycocotools.cocoeval import COCOeval
 import json
+import asyncio
 
 # ----------------------- Fix the flash attention bug in the current version of transformers -----------------------
 from transformers.models.qwen2_5_vl.modeling_qwen2_5_vl import Qwen2_5_VLVisionFlashAttention2, apply_rotary_pos_emb_flashatt, flash_attn_varlen_func
@@ -51,6 +52,8 @@ client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY", "sk-proj-1234567890"),
     base_url=os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 )
+
+semaphore = asyncio.Semaphore(10)  # Limit to 10 concurrent API calls
 
 def custom_forward(
         self,
@@ -535,13 +538,15 @@ def format_reward_custom(completions, **kwargs):
     return [1.0 if match else 0.0 for match in matches]
 
 
-def low_level_action_reward(completions, image_path, problem, **kwargs):
+async def low_level_action_reward(completions, image_path, problem, **kwargs):
 
     print("Computing low level action reward")
     contents = [completion[0]["content"] for completion in completions]
-    rewards = []
-    
-    for content, image_path in zip(contents, image_path):
+
+    tasks = []
+    results = []
+
+    for content, image_path, problem in zip(contents, image_path, problem):
 
         print("\n")
         print("Content:", content)
@@ -570,14 +575,18 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
 
         # Display annotated image
         display(annotated_img)
+
+        tasks.append((task, annotated_img, high_level_action, low_level_action, previous_actions))
         print("\n\n")
 
-        reasoning, final_rating = evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions)
-        print("Reasoning:", reasoning)
-        print("Final rating:", final_rating)
+    for task, annotated_img, high_level_action, low_level_action, previous_actions in tasks:
+        async with semaphore:
+            results.append(await evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions))
 
-        reward = final_rating
-        rewards.append(reward)
+
+    final_resulst = await asyncio.gather(*results)
+    print("final_resulst:", final_resulst)
+    rewards = [result[1] for result in final_resulst]
 
     return rewards
 
