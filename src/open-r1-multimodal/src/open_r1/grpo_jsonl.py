@@ -557,7 +557,7 @@ async def _low_level_action_reward(completions, image_path, problem, **kwargs):
         content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
         command = content_match.group(1).strip() if content_match else content.strip()
 
-        previous_actions = problem.lower().split("previous actions:").split("\n\n\n")[0].strip()
+        previous_actions = problem.lower().split("previous actions:")[1].split("\n\n\n")[0].strip()
         task = problem.lower().split("instruction:")[1].strip().split("\n")[0].strip()
 
         high_level_action = command.split("Action:")[1].strip().split("\n")[0].strip()
