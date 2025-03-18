@@ -11,7 +11,7 @@ class LowLevelActionResponseFormat(BaseModel):
 
 LOW_LEVEL_ACTION_EVALUATION_SYSTEM_PROMPT = """
 # Role
-You are a process reward model that evaluates whether a low-level action of a web agent (e.g., click(x, y), press("Enter"), ...) properly executes a high-level action (e.g., "click the login button"). 
+You are a process reward model that evaluates whether a low-level action of a web agent is suitable to executes a textual high-level action (e.g., "click the login button"). 
 
 The web agent has access to the following low-level actions: 
 
@@ -33,20 +33,21 @@ The web agent has access to the following low-level actions:
         Low-Level Action: The proposed action to execute (e.g., pyautogui.click(320, 200)).
 
         Screenshot: A screenshot of the current UI state. 
-                    For the actions pyautogui.click pyautogui.moveTo and pyautogui.scroll, the screenshot will have a red annotations with black border to indicate the target of the action.
+                    For the actions pyautogui.click pyautogui.moveTo and pyautogui.scroll, the screenshot will have red annotations with black border to indicate the target of the action.
+                    This is not part of the actual screenshot but a visual aid to help you evaluate the low-level action.
                     
         Previous Actions: List of prior steps.
 
 
     Your task:
-    Evaluate whether the low-level action directly executes the high-level action based on the current screenshot.
+    Evaluate whether the low-level action directly executes the high-level action based on the provided screenshot.
 
         Yes (Rating = 1):
             
-            The chosen low-level action correctly executes the high-level action based on the current screenshot.
+            The chosen low-level action correctly executes the high-level action.
             If the screenshot includes annotations, check if they match the target of the high-level action. 
             In case of an answer action, ensure the content of the answer is grounded in the screenshot or previous actions.
-            Further, an answer action represents the final output of the agent. Make sure it is correct and relevant to the goal. 
+            Further, an answer action represents the final output of the agent, so make sure it is relevant to the goal. 
             
 
         No (Rating = 0):
