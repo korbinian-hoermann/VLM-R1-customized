@@ -578,44 +578,17 @@ async def low_level_action_reward(completions, image_path, problem, **kwargs):
         # Display annotated image
         display(annotated_img)
 
-        tasks.append((task, annotated_img, high_level_action, low_level_action, previous_actions))
+                # Call evaluate_low_level_action synchronously
+        result = evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions)
+        results.append(result)
         print("\n\n")
+        print("\tResult:", result)
 
-    for task, annotated_img, high_level_action, low_level_action, previous_actions in tasks:
-        #async with semaphore:
-        results.append(evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions))
-
-    final_resulst = await asyncio.gather(*results)
-    print("final_resulst:", final_resulst)
-    rewards = [result[1] for result in final_resulst]
+    # Extract rewards from the results
+    rewards = [result[1][1] for result in results]
 
     return rewards
 
-import asyncio
-import nest_asyncio
-
-'''def low_level_action_reward(completions, image_path, problem, **kwargs):
-    """
-    Synchronous wrapper for the asynchronous low-level action reward.
-    It will run the async function _low_level_action_reward and wait for its result.
-    """
-    try:
-        # Try to get the running loop; if one exists, patch it for nested use.
-        loop = asyncio.get_running_loop()
-        if loop.is_running():
-            nest_asyncio.apply()
-            return loop.run_until_complete(
-                _low_level_action_reward(completions, image_path, problem, **kwargs)
-            )
-    except RuntimeError:
-        # No running loop; safe to use asyncio.run()
-        pass
-
-    # If no loop is running, use asyncio.run
-    return asyncio.run(
-        _low_level_action_reward(completions, image_path, problem, **kwargs)
-    )
-'''
 
 # TODO: add the 2 VLM based evaluators
 reward_funcs_registry = {

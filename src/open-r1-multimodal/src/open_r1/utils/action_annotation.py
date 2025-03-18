@@ -51,7 +51,7 @@ def annotate_action(actions: str, screenshot: Image) -> Image:
     print(f"Annotating screenshot with the generated low-level action...")
     print(f"Actions: {actions}")
 
-    annotated_screenshot = None
+    annotated_screenshot = screenshot
 
     for action in actions.split("\n"):
         print(f"\tCreating annotation for action: {action}")
