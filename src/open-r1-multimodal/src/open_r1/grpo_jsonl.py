@@ -42,7 +42,7 @@ import torch
 from typing import Tuple
 from transformers.utils import logging
 
-from utils.reward_model_prompts import evaluate_low_level_action
+from utils.reward_model_prompts import evaluate_low_level_action, evaluate_high_level_action
 
 from openai import OpenAI
 
@@ -115,7 +115,7 @@ class GRPOScriptArguments(ScriptArguments):
         metadata={"help": "Ratio of validation split, default 0.0"},
     )
     reward_funcs: list[str] = field(
-        default_factory=lambda: ["accuracy", "format", "low_level_action_reward", "format_custom"],
+        default_factory=lambda: ["low_level_action_reward", "high_level_action_reward", "format_custom"],
         metadata={"help": "List of reward functions. Possible values: 'accuracy', 'format'"},
     )
     max_pixels: Optional[int] = field(
@@ -589,13 +589,57 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
 
     return rewards
 
+def high_level_action_reward(completions, image_path, problem, **kwargs):
+
+    print("Computing high level action reward")
+    contents = [completion[0]["content"] for completion in completions]
+    print("problem:", problem)
+
+    tasks = []
+    results = []
+
+    for content, image_path, problem in zip(contents, image_path, problem):
+
+        print("\n")
+        print("Content:", content)
+        print("Problem:", problem)
+        print("\n")
+        # Extract answer from content if it has think/answer tags
+        content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
+        command = content_match.group(1).strip() if content_match else content.strip()
+
+        previous_actions = problem.lower().split("previous actions:")[1].split("\n\n\n")[0].strip()
+        task = problem.lower().split("instruction:")[1].strip().split("\n")[0].strip()
+        high_level_action = command.split("Action:")[1].strip().split("\n")[0].strip()
+
+        print("task:\n", task)
+        print("previous_actions:\n", previous_actions)
+        print("high_level_action:\n", high_level_action)
+
+
+        # Load image
+        img = PIL.Image.open(image_path)
+
+
+        # Call evaluate_high_level_action synchronously
+        result = evaluate_high_level_action(client, task, img, high_level_action, previous_actions)
+        results.append(result)
+        print("\n\n")
+        print("\tResult:", result)
+
+    # Extract rewards from the results
+    rewards = [result[1][1] for result in results]
+
+    return rewards
+
 
 # TODO: add the 2 VLM based evaluators
 reward_funcs_registry = {
     "accuracy": accuracy_reward,
     "format": format_reward,
     "format_custom": format_reward_custom,
-    "low_level_action_reward": low_level_action_reward
+    "low_level_action_reward": low_level_action_reward,
+    "high_level_action_reward": high_level_action_reward
 }
 
 
