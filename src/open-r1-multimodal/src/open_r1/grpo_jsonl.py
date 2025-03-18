@@ -535,7 +535,12 @@ def format_reward_custom(completions, **kwargs):
                 f.write(f"Content: {content}\n")
                 f.write(f"Has correct format: {bool(match)}\n")
 
-    return [1.0 if match else 0.0 for match in matches]
+
+    rewards = [1.0 if match else 0.0 for match in matches]
+    print("*"*50)
+    print("custom format rewards:", rewards)
+    print("*"*50)
+    return rewards
 
 
 def low_level_action_reward(completions, image_path, problem, **kwargs):
@@ -587,6 +592,10 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
     # Extract rewards from the results
     rewards = [result[1][1] for result in results]
 
+    print("*"*50)
+    print("low level action rewards:", rewards)
+    print("*"*50)
+
     return rewards
 
 def high_level_action_reward(completions, image_path, problem, **kwargs):
@@ -629,6 +638,10 @@ def high_level_action_reward(completions, image_path, problem, **kwargs):
 
     # Extract rewards from the results
     rewards = [result[1][1] for result in results]
+
+    print("*"*50)
+    print("high level action rewards:", rewards)
+    print("*"*50)
 
     return rewards
 
