@@ -538,7 +538,7 @@ def format_reward_custom(completions, **kwargs):
     return [1.0 if match else 0.0 for match in matches]
 
 
-async def low_level_action_reward(completions, image_path, problem, **kwargs):
+def low_level_action_reward(completions, image_path, problem, **kwargs):
 
     print("Computing low level action reward")
     contents = [completion[0]["content"] for completion in completions]
@@ -578,7 +578,7 @@ async def low_level_action_reward(completions, image_path, problem, **kwargs):
         # Display annotated image
         display(annotated_img)
 
-                # Call evaluate_low_level_action synchronously
+        # Call evaluate_low_level_action synchronously
         result = evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions)
         results.append(result)
         print("\n\n")
