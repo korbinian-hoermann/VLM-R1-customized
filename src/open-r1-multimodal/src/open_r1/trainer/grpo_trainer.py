@@ -61,6 +61,8 @@ if is_peft_available():
 if is_wandb_available():
     import wandb
 
+from utils.tracking import TrainingTracker
+
 # What we call a reward function is a callable that takes a list of prompts and completions and returns a list of
 # rewards. When it's a string, it's a model ID, so it's loaded as a pretrained model.
 RewardFunc = Union[str, PreTrainedModel, Callable[[list, list], list[float]]]
@@ -218,6 +220,9 @@ class Qwen2VLGRPOTrainer(Trainer):
         attn_implementation: str = "flash_attention_2",
         torch_dtype: str = "bfloat16",
     ):
+
+        self.training_tracker = TrainingTracker(True, "./")
+        
         # Args
         if args is None:
             model_name = model if isinstance(model, str) else model.config._name_or_path
@@ -496,6 +501,19 @@ class Qwen2VLGRPOTrainer(Trainer):
         return inputs
 
     def _generate_and_score_completions(self, inputs: dict[str, Union[torch.Tensor, Any]], model) -> dict[str, Union[torch.Tensor, Any]]:
+        tracking_sample_ids = []
+        tracking_prompts = []
+        tracking_image_paths = []
+        tracking_images = []
+        tracking_annotated_images = []
+        tracking_model_responses = []
+        tracking_ground_truths = []
+        tracking_low_level_action_evaluation_reasonings = []
+        tracking_low_level_action_evaluation_scores = []
+        tracking_high_level_action_evaluation_reasonings = [] 
+        tracking_high_level_action_evaluation_scores = []
+        tracking_custom_format_reward_scores = []
+        
         print("\n\n")
         print("=" * 50)
         print("Generating completions...")
@@ -513,10 +531,14 @@ class Qwen2VLGRPOTrainer(Trainer):
         # Handle both pre-loaded images and image paths
         images = []
         for x in inputs:
+            tracking_sample_ids.append(x["sample_id"])
+            tracking_prompts.append(x["prompt"])
             if "image" in x:
                 img = x["image"]
+                tracking_images.append(img)
             elif "image_path" in x and x["image_path"] is not None:
                 img = PIL.Image.open(x["image_path"])
+                tracking_image_paths.append(x["image_path"])
 
             try:
                 # Ensure minimum dimensions of 28 pixels
@@ -628,6 +650,7 @@ class Qwen2VLGRPOTrainer(Trainer):
         completions = self.processing_class.batch_decode(completion_ids, skip_special_tokens=True)
         print("\n\n5. Completions:")
         pprint.pp(completions)
+        tracking_model_responses = completions
         if is_conversational(inputs[0]):
             completions = [[{"role": "assistant", "content": completion}] for completion in completions]
 
@@ -670,6 +693,12 @@ class Qwen2VLGRPOTrainer(Trainer):
         # Gather rewards across processes
         rewards_per_func = self.accelerator.gather(rewards_per_func)
         
+        print(f"\n\n")
+        print(f"rewards_per_func: {rewards_per_func}")
+        tracking_low_level_action_evaluation_scores, tracking_high_level_action_evaluation_scores, tracking_custom_format_reward_scores = rewards_per_func.split(1, dim=1)
+        tracking_low_level_action_evaluation_reasonings = ["dummy"] * len(tracking_low_level_action_evaluation_scores)
+        tracking_high_level_action_evaluation_reasonings = ["dummy"] * len(tracking_high_level_action_evaluation_scores)
+
         # Sum the rewards from all reward functions
         rewards = rewards_per_func.sum(dim=1)
         
@@ -705,6 +734,20 @@ class Qwen2VLGRPOTrainer(Trainer):
         self._metrics["reward"].append(self.accelerator.gather_for_metrics(rewards).mean().item())
 
         self._metrics["reward_std"].append(self.accelerator.gather_for_metrics(std_grouped_rewards).mean().item())
+
+        # add samples to tracker
+        for i in range(len(tracking_sample_ids)):
+            self.training_tracker.add_sample(
+                sample_id=tracking_sample_ids[i],
+                prompt=tracking_prompts[i],
+                image_path=tracking_image_paths[i],
+                image=tracking_images[i],
+                annotated_image=tracking_annotated_images[i],
+                model_response=tracking_model_responses[i],
+                ground_truth=tracking_ground_truths[i],
+            )
+
+        self.training_tracker.update_tracking_table()
 
         return {
             "prompt_ids": prompt_ids,
