@@ -186,6 +186,9 @@ class TrainingTracker:
                 
                 # Add to the existing table
                 self.wandb_table.add_data(*wandb_row)
+                table_df = self.wandb_table.get_dataframe()
+                print(f"table len: {len(table_df)}")
+                print(table_df.head())
 
             
             # Log the updated table
