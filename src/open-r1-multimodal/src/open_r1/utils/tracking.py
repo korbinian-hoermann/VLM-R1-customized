@@ -163,14 +163,18 @@ class TrainingTracker:
                 print(f"Adding row {n} of new batch_df to W&B table")
                 # Handle images specially for W&B
                 wandb_row = list(row)
+                print(f"Row: {wandb_row}")
                 
                 # Replace base64 images with wandb.Image objects
                 image_idx = columns.index('image')
+                print(f"Image index: {image_idx}")
                 annotated_idx = columns.index('annotated_image')
+                print(f"Annotated image index: {annotated_idx}")
                 
                 if row['image'] is not None:
                     img = self._base64_to_image(row['image'])
                     wandb_row[image_idx] = wandb.Image(img)
+                    print(f"Added image to W&B table")
                 else:
                     wandb_row[image_idx] = None
                     
@@ -182,6 +186,7 @@ class TrainingTracker:
                 
                 # Add to the existing table
                 self.wandb_table.add_data(*wandb_row)
+
             
             # Log the updated table
             wandb.log({"training_samples": self.wandb_table})
