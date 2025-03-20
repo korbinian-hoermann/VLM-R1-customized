@@ -127,7 +127,8 @@ class TrainingTracker:
     def update_tracking_table(self):
         """
         Update the tracking dataframe with the current batch of records
-        and log to Weights & Biases if enabled.
+        and log to Weights & Biases if enabled. Every 10 batches, a new table
+        is logged to update the GUI visualization.
         """
         if not self.batch_records:
             return
@@ -151,11 +152,10 @@ class TrainingTracker:
         print("Updated tracking table")
         print(self.tracking_df.shape)
         
-        # Save locally
-        self.tracking_df.to_csv(os.path.join(self.log_dir, f"tracking_data.csv"), index=False)
-        
-        # Log to W&B if enabled
-        if self.log_to_wandb and self.wandb_table is not None:
+        # Log the new batch to the current W&B table if enabled
+        if self.log_to_wandb and wandb.run is not None:
+            if self.wandb_table is None:
+                self.wandb_table = wandb.Table(columns=list(self.tracking_df.columns))
             columns = list(self.tracking_df.columns)
             
             # Add rows to the W&B table
@@ -163,9 +163,7 @@ class TrainingTracker:
                 print(f"Adding row {n} of new batch_df to W&B table")
                 # Handle images specially for W&B
                 wandb_row = list(row)
-                print(f"Row: {wandb_row}")
-                
-                # Replace base64 images with wandb.Image objects
+                # Process images for W&B (convert base64 back to image objects)
                 image_idx = columns.index('image')
                 print(f"Image index: {image_idx}")
                 annotated_idx = columns.index('annotated_image')
@@ -188,17 +186,34 @@ class TrainingTracker:
                 
                 # Add to the existing table
                 self.wandb_table.add_data(*wandb_row)
-                table_df = self.wandb_table.get_dataframe()
-                print(f"table len: {len(table_df)}")
-                print(table_df.head())
 
-
-            # Log the updated table
+            # Log the current table snapshot under a general key and a batch-specific key
             wandb.log({"training_samples": self.wandb_table})
 
             # log table with batch number
             wandb.log({f"training_samples_batch_{self.current_batch}": self.wandb_table})
         
-        # Clear batch records and increment batch counter
+        # Clear the current batch records and increment the batch counter
         self.batch_records = []
         self.current_batch += 1
+
+        # Every 10 batches, create a new cumulative table and log it with a new key.
+        if self.current_batch % 10 == 0:
+            if self.log_to_wandb and wandb.run is not None:
+                new_table = wandb.Table(columns=list(self.tracking_df.columns))
+                for _, row in self.tracking_df.iterrows():
+                    row_list = list(row)
+                    image_idx = list(self.tracking_df.columns).index('image')
+                    annotated_idx = list(self.tracking_df.columns).index('annotated_image')
+                    if row['image'] is not None:
+                        row_list[image_idx] = wandb.Image(self._base64_to_image(row['image']))
+                    else:
+                        row_list[image_idx] = None
+                    if row['annotated_image'] is not None:
+                        row_list[annotated_idx] = wandb.Image(self._base64_to_image(row['annotated_image']))
+                    else:
+                        row_list[annotated_idx] = None
+                    new_table.add_data(*row_list)
+                # Log the new cumulative table under a unique key to refresh the GUI visualization
+                wandb.log({f"training_samples_cumulative_{self.current_batch}": new_table})
+
