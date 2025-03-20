@@ -532,7 +532,7 @@ class Qwen2VLGRPOTrainer(Trainer):
         images = []
         for x in inputs:
             tracking_sample_ids.append(x["id"])
-            tracking_prompts.append(x["prompt"])
+            tracking_prompts.append(x["problem"])
             if "image" in x:
                 img = x["image"]
             elif "image_path" in x and x["image_path"] is not None:
