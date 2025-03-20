@@ -220,8 +220,6 @@ class Qwen2VLGRPOTrainer(Trainer):
         attn_implementation: str = "flash_attention_2",
         torch_dtype: str = "bfloat16",
     ):
-
-        self.training_tracker = TrainingTracker(True, "./")
         
         # Args
         if args is None:
@@ -450,6 +448,8 @@ class Qwen2VLGRPOTrainer(Trainer):
         for i, reward_func in enumerate(self.reward_funcs):
             if isinstance(reward_func, PreTrainedModel):
                 self.reward_funcs[i] = self.accelerator.prepare_model(reward_func, evaluation_mode=True)
+
+        self.training_tracker = TrainingTracker(True, "./")
 
     def _enable_gradient_checkpointing(self, model: PreTrainedModel, args: GRPOConfig) -> PreTrainedModel:
         """Enables gradient checkpointing for the model."""
