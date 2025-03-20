@@ -46,6 +46,7 @@ class TrainingTracker:
         
         self.batch_records = []
         self.current_batch = 0
+        self.wandb_table = None
         
         # Initialize a single W&B table if logging to W&B
 
