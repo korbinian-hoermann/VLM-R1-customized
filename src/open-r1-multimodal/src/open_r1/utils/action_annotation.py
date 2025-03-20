@@ -25,23 +25,56 @@ import re
 import math
 
 
-def convert_scroll(action, screenshot: Image):
+def convert_scroll(action, screenshot):
     """
-    Convert the scroll action of the form: pyautogui.scroll(page=-0.28) to x and y coordinates.
+    Convert a scroll action string into (x, y) pixel offsets.
+
+    Supports scroll actions specified as key/value pairs, e.g.:
+      pyautogui.scroll(page=-0.65)
+      pyautogui.scroll(page=-0.65, horizontal=0.15)
+
+    or as positional arguments, e.g.:
+      pyautogui.scroll(-0.65, 0.15)
+
+    Args:
+        action (str): The scroll action string.
+        screenshot: An image-like object with 'width' and 'height' attributes.
+
+    Returns:
+        tuple: (x, y) pixel offsets where x is horizontal scroll and y is vertical scroll.
     """
-    # Extract the page value
-    match = re.search(r"page=(-?\d+\.\d+)", action)
-    if match is None:
-        return None, None
+    # Try to extract key/value pairs (e.g., "page=-0.65", "horizontal=0.15")
+    pattern = r"(\w+)\s*=\s*(-?\d+\.\d+)"
+    kv_pairs = dict(re.findall(pattern, action))
 
-    page = float(match.group(1)) * screenshot.width
+    if kv_pairs:
+        # Use the "page" parameter for vertical scrolling (defaulting to 0 if not provided)
+        vertical = float(kv_pairs.get('page', 0))
+        # Typically vertical scroll is scaled by the image height.
+        y = -vertical * screenshot.height  # Invert to match scroll direction
 
-    # Positive page value means scroll up (negative y)
-    # Negative page value means scroll down (positive y)
-    x = 0
-    y = -page  # Invert the direction
+        # Support horizontal scrolling specified as "horizontal" or shorthand "h"
+        horizontal_str = kv_pairs.get('horizontal', kv_pairs.get('h', None))
+        if horizontal_str is not None:
+            x = float(horizontal_str) * screenshot.width
+        else:
+            x = 0
+        return x, y
+    else:
+        # Fall back to positional numbers, assuming the first is vertical and the second (if exists) is horizontal.
+        numbers = re.findall(r"-?\d+\.\d+", action)
+        if not numbers:
+            return 0, 0
 
-    return x, y
+        vertical = float(numbers[0])
+        y = -vertical * screenshot.height
+
+        if len(numbers) > 1:
+            horizontal = float(numbers[1])
+            x = horizontal * screenshot.width
+        else:
+            x = 0
+        return x, y
 
 
 def annotate_action(actions: str, screenshot: Image) -> Image:
