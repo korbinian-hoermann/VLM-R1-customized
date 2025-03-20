@@ -142,10 +142,14 @@ class TrainingTracker:
         if self.log_to_wandb and wandb.run is not None and self.wandb_table is None:
             print("Initiated W&B table")
             self.wandb_table = wandb.Table(columns=list(self.tracking_df.columns))
+        else:
+            print("Using existing W&B table")
         
         # Add batch records to dataframe
         batch_df = pd.DataFrame(self.batch_records)
         self.tracking_df = pd.concat([self.tracking_df, batch_df], ignore_index=True)
+        print("Updated tracking table")
+        print(self.tracking_df.shape)
         
         # Save locally
         self.tracking_df.to_csv(os.path.join(self.log_dir, f"tracking_data.csv"), index=False)
@@ -155,7 +159,8 @@ class TrainingTracker:
             columns = list(self.tracking_df.columns)
             
             # Add rows to the W&B table
-            for _, row in batch_df.iterrows():
+            for n, row in batch_df.iterrows():
+                print(f"Adding row {n} of new batch_df to W&B table")
                 # Handle images specially for W&B
                 wandb_row = list(row)
                 
