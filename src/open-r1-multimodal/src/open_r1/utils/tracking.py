@@ -189,9 +189,6 @@ class TrainingTracker:
 
             # Log the current table snapshot under a general key and a batch-specific key
             wandb.log({"training_samples": self.wandb_table})
-
-            # log table with batch number
-            wandb.log({f"training_samples_batch_{self.current_batch}": self.wandb_table})
         
         # Clear the current batch records and increment the batch counter
         self.batch_records = []
