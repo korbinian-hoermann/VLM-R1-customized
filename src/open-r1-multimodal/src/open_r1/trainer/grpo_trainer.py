@@ -535,10 +535,12 @@ class Qwen2VLGRPOTrainer(Trainer):
             tracking_prompts.append(x["prompt"])
             if "image" in x:
                 img = x["image"]
-                tracking_images.append(img)
             elif "image_path" in x and x["image_path"] is not None:
                 img = PIL.Image.open(x["image_path"])
                 tracking_image_paths.append(x["image_path"])
+                tracking_images.append(PIL.Image.open(x["image_path"]))
+            if 'solution' in x:
+                tracking_ground_truths.append(x['solution'])
 
             try:
                 # Ensure minimum dimensions of 28 pixels
@@ -735,14 +737,24 @@ class Qwen2VLGRPOTrainer(Trainer):
 
         self._metrics["reward_std"].append(self.accelerator.gather_for_metrics(std_grouped_rewards).mean().item())
 
+        print("\n\nADDING TO TRACKING DF")
+
         # add samples to tracker
         for i in range(len(tracking_sample_ids)):
+            print(f"Adding sample {i} to tracker")
+            print(f"tracking_sample_ids[i]: {tracking_sample_ids[i]}")
+            print(f"tracking_prompts[i]: {tracking_prompts[i]}")
+            print(f"tracking_image_paths[i]: {tracking_image_paths[i]}")
+            print(f"tracking_images[i]: {tracking_images[i]}")
+            print(f"tracking_model_responses[i]: {tracking_model_responses[i]}")
+            print(f"tracking_ground_truths[i]: {tracking_ground_truths[i]}")
+
             self.training_tracker.add_sample(
                 sample_id=tracking_sample_ids[i],
                 prompt=tracking_prompts[i],
                 image_path=tracking_image_paths[i],
                 image=tracking_images[i],
-                annotated_image=tracking_annotated_images[i],
+                #annotated_image=tracking_annotated_images[i],
                 model_response=tracking_model_responses[i],
                 ground_truth=tracking_ground_truths[i],
             )
