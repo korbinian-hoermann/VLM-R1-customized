@@ -48,6 +48,13 @@ class TrainingTracker:
         self.current_batch = 0
         
         # Initialize a single W&B table if logging to W&B
+
+        print("Init of tracking table")
+        print(self.batch_records)
+        print(self.log_to_wandb)
+        print(self.wandb_table)
+        print(wandb.run)
+
         if self.log_to_wandb and wandb.run is not None and self.wandb_table is None:
             print("Initiated W&B table")
             self.wandb_table = wandb.Table(columns=list(self.tracking_df.columns))
@@ -123,6 +130,12 @@ class TrainingTracker:
         """
         if not self.batch_records:
             return
+
+        print("Updateing tracking table")
+        print(self.batch_records)
+        print(self.log_to_wandb)
+        print(self.wandb_table)
+        print(wandb.run)
 
         # Initialize a single W&B table if logging to W&B and not already created
         if self.log_to_wandb and wandb.run is not None and self.wandb_table is None:
