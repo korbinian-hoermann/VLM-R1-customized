@@ -51,9 +51,6 @@ class TrainingTracker:
         if self.log_to_wandb and wandb.run is not None and self.wandb_table is None:
             print("Initiated W&B table")
             self.wandb_table = wandb.Table(columns=list(self.tracking_df.columns))
-        else:
-            print("W&B not enabled")
-            self.wandb_table = None
     
     def add_sample(self, 
                   sample_id: str,
@@ -131,9 +128,6 @@ class TrainingTracker:
         if self.log_to_wandb and wandb.run is not None and self.wandb_table is None:
             print("Initiated W&B table")
             self.wandb_table = wandb.Table(columns=list(self.tracking_df.columns))
-        else:
-            print("W&B not enabled")
-            self.wandb_table = None
         
         # Add batch records to dataframe
         batch_df = pd.DataFrame(self.batch_records)

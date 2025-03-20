@@ -66,6 +66,7 @@ from utils.tracking import TrainingTracker
 # What we call a reward function is a callable that takes a list of prompts and completions and returns a list of
 # rewards. When it's a string, it's a model ID, so it's loaded as a pretrained model.
 RewardFunc = Union[str, PreTrainedModel, Callable[[list, list], list[float]]]
+training_tracker = TrainingTracker(True, "./")
 
 
 class RepeatRandomSampler(Sampler):
@@ -449,7 +450,6 @@ class Qwen2VLGRPOTrainer(Trainer):
             if isinstance(reward_func, PreTrainedModel):
                 self.reward_funcs[i] = self.accelerator.prepare_model(reward_func, evaluation_mode=True)
 
-        self.training_tracker = TrainingTracker(True, "./")
 
     def _enable_gradient_checkpointing(self, model: PreTrainedModel, args: GRPOConfig) -> PreTrainedModel:
         """Enables gradient checkpointing for the model."""
@@ -758,7 +758,7 @@ class Qwen2VLGRPOTrainer(Trainer):
             print(f"tracking_model_responses[i]: {tracking_model_responses[i]}")
             print(f"tracking_ground_truths[i]: {tracking_ground_truths[i]}")
 
-            self.training_tracker.add_sample(
+            training_tracker.add_sample(
                 sample_id=tracking_sample_ids[i],
                 prompt=tracking_prompts[i],
                 image_path=tracking_image_paths[i],
@@ -768,7 +768,7 @@ class Qwen2VLGRPOTrainer(Trainer):
                 ground_truth=tracking_ground_truths[i],
             )
 
-        self.training_tracker.update_tracking_table()
+        training_tracker.update_tracking_table()
 
         return {
             "prompt_ids": prompt_ids,
