@@ -531,7 +531,7 @@ class Qwen2VLGRPOTrainer(Trainer):
         # Handle both pre-loaded images and image paths
         images = []
         for x in inputs:
-            tracking_sample_ids.append(x["sample_id"])
+            tracking_sample_ids.append(x["id"])
             tracking_prompts.append(x["prompt"])
             if "image" in x:
                 img = x["image"]
