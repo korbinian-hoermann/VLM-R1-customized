@@ -46,6 +46,12 @@ class TrainingTracker:
         
         self.batch_records = []
         self.current_batch = 0
+        
+        # Initialize a single W&B table if logging to W&B
+        if self.log_to_wandb and wandb.run is not None:
+            self.wandb_table = wandb.Table(columns=list(self.tracking_df.columns))
+        else:
+            self.wandb_table = None
     
     def add_sample(self, 
                   sample_id: str,
@@ -128,13 +134,9 @@ class TrainingTracker:
         
         # Log to W&B if enabled
         if self.log_to_wandb and wandb.run is not None:
-            # Create a W&B Table
             columns = list(self.tracking_df.columns)
             
-            # Create a table with all data except images (which need special handling)
-            wandb_table = wandb.Table(columns=columns)
-            
-            # Add rows to the table
+            # Add rows to the W&B table
             for _, row in batch_df.iterrows():
                 # Handle images specially for W&B
                 wandb_row = list(row)
@@ -155,13 +157,12 @@ class TrainingTracker:
                 else:
                     wandb_row[annotated_idx] = None
                 
-                wandb_table.add_data(*wandb_row)
+                # Add to the existing table
+                self.wandb_table.add_data(*wandb_row)
             
-            # Log the table
-            wandb.log({f"training_samples_batch_{self.current_batch}": wandb_table})
+            # Log the updated table
+            wandb.log({"training_samples": self.wandb_table})
         
         # Clear batch records and increment batch counter
         self.batch_records = []
         self.current_batch += 1
-    
-    
