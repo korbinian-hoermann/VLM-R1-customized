@@ -701,6 +701,15 @@ class Qwen2VLGRPOTrainer(Trainer):
         tracking_low_level_action_evaluation_reasonings = ["dummy"] * len(tracking_low_level_action_evaluation_scores)
         tracking_high_level_action_evaluation_reasonings = ["dummy"] * len(tracking_high_level_action_evaluation_scores)
 
+        print(f"dimensions of tracking_low_level_action_evaluation_scores: {tracking_low_level_action_evaluation_scores.shape}")
+        print(f"dimensions of tracking_high_level_action_evaluation_scores: {tracking_high_level_action_evaluation_scores.shape}")
+        tracking_low_level_action_evaluation_scores = tracking_low_level_action_evaluation_scores.flatten().tolist()
+        print(f"\n\n")
+        print(f"Content of tracking_low_level_action_evaluation_scores: {tracking_low_level_action_evaluation_scores}")
+        print(f"Content of tracking_high_level_action_evaluation_scores: {tracking_high_level_action_evaluation_scores}")
+        print(f"Content of tracking_custom_format_reward_scores: {tracking_custom_format_reward_scores}")
+
+
         # Sum the rewards from all reward functions
         rewards = rewards_per_func.sum(dim=1)
         
