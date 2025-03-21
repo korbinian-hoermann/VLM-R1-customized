@@ -77,7 +77,7 @@ def convert_scroll(action, screenshot):
         return x, y
 
 
-def annotate_action(actions: str, screenshot: Image) -> Image:
+def annotate_action(actions: str, screenshot: Image) -> Tuple[Image, bool]:
     """
     Annotate the screenshot with the generated low-level action.
     """
@@ -90,15 +90,15 @@ def annotate_action(actions: str, screenshot: Image) -> Image:
         print(f"\tCreating annotation for action: {action}")
         if action.startswith("pyautogui.click"):
             x, y = extract_x_y(action)
-            annotated_screenshot = annotate_click(x, y, screenshot)
+            annotated_screenshot, success = annotate_click(x, y, screenshot)
         elif action.startswith("pyautogui.moveTo"):
             x, y = extract_x_y(action)
-            annotated_screenshot = annotate_move(x, y, screenshot)
+            annotated_screenshot, success = annotate_move(x, y, screenshot)
         elif action.startswith("pyautogui.scroll"):
             x, y = convert_scroll(action, screenshot)
-            annotated_screenshot = annotate_scroll(x, y, screenshot)
+            annotated_screenshot, success = annotate_scroll(x, y, screenshot)
 
-    return annotated_screenshot
+    return annotated_screenshot, success
 
 
 def extract_x_y(action: str) -> Tuple[int, int]:
@@ -124,45 +124,50 @@ def annotate_click(x, y, image):
     :param point:
     :return:
     """
+    success = False
+    try:
+        color = "red"
+        action = "Click"
+        print(f"Annotating click at ({x}, {y})")
+        x, y = float(x), float(y)
 
-    color = "red"
-    action = "Click"
-    print(f"Annotating click at ({x}, {y})")
-    x, y = float(x), float(y)
+        radius = min(image.width, image.height) // 15
+        outer_halo_radius = radius + 2  # Increase the radius for the halo
 
-    radius = min(image.width, image.height) // 15
-    outer_halo_radius = radius + 2  # Increase the radius for the halo
+        # scale x, y to 0-1000 range depending on image size
+        x = int(x * image.width)
+        y = int(y * image.height)
 
-    # scale x, y to 0-1000 range depending on image size
-    x = int(x * image.width)
-    y = int(y * image.height)
+        # Draw a red circle at the specified coordinates
+        print(f"Drawing red circle at ({x}, {y})")
 
-    # Draw a red circle at the specified coordinates
-    print(f"Drawing red circle at ({x}, {y})")
+        # Draw outer circle
+        Draw(image).ellipse((x - outer_halo_radius, y - outer_halo_radius, x + outer_halo_radius, y + outer_halo_radius),
+                            outline="black", width=4)
+        Draw(image).ellipse((x - radius, y - radius, x + radius, y + radius), outline=color, width=2)
 
-    # Draw outer circle
-    Draw(image).ellipse((x - outer_halo_radius, y - outer_halo_radius, x + outer_halo_radius, y + outer_halo_radius),
-                        outline="black", width=4)
-    Draw(image).ellipse((x - radius, y - radius, x + radius, y + radius), outline=color, width=2)
+        # Draw inner circle
+        Draw(image).ellipse((x - 4, y - 4, x + 4, y + 4), outline="black", width=4)
+        Draw(image).ellipse((x - 2, y - 2, x + 2, y + 2), fill=color)
 
-    # Draw inner circle
-    Draw(image).ellipse((x - 4, y - 4, x + 4, y + 4), outline="black", width=4)
-    Draw(image).ellipse((x - 2, y - 2, x + 2, y + 2), fill=color)
+        # Add label to the circle, indicating the action. make sure the label is visible (inside the image)
+        if x + 10 < image.width and y + 10 < image.height:
+            Draw(image).text((x + 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
-    # Add label to the circle, indicating the action. make sure the label is visible (inside the image)
-    if x + 10 < image.width and y + 10 < image.height:
-        Draw(image).text((x + 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
+        elif x - 10 > 0 and y - 10 > 0:
+            Draw(image).text((x - 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
-    elif x - 10 > 0 and y - 10 > 0:
-        Draw(image).text((x - 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
+        elif x + 10 < image.width and y - 10 > 0:
+            Draw(image).text((x + 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
-    elif x + 10 < image.width and y - 10 > 0:
-        Draw(image).text((x + 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
+        elif x - 10 > 0 and y + 10 < image.height:
+            Draw(image).text((x - 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
+        success = True
+    except Exception as e:
+        print(f"Error: {e}")
 
-    elif x - 10 > 0 and y + 10 < image.height:
-        Draw(image).text((x - 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
-    return image
+    return image, success
 
 
 def annotate_move(x: int, y: int, image: Image) -> Image:
@@ -170,44 +175,49 @@ def annotate_move(x: int, y: int, image: Image) -> Image:
     Annotate the screenshot with the move action by drawing a blue circle at the specified coordinates.
     """
 
-    color = "red"
-    action = "MoveTo"
-    print(f"Annotating moveTo at ({x}, {y})")
-    x, y = float(x), float(y)
+    success = False
+    try:
+        color = "red"
+        action = "MoveTo"
+        print(f"Annotating moveTo at ({x}, {y})")
+        x, y = float(x), float(y)
 
-    radius = min(image.width, image.height) // 15
-    outer_halo_radius = radius + 2  # Increase the radius for the halo
+        radius = min(image.width, image.height) // 15
+        outer_halo_radius = radius + 2  # Increase the radius for the halo
 
-    # scale x, y to 0-1000 range depending on image size
-    x = int(x * image.width)
-    y = int(y * image.height)
+        # scale x, y to 0-1000 range depending on image size
+        x = int(x * image.width)
+        y = int(y * image.height)
 
-    # Draw a red circle at the specified coordinates
-    print(f"Drawing blue circle at ({x}, {y})")
+        # Draw a red circle at the specified coordinates
+        print(f"Drawing blue circle at ({x}, {y})")
 
-    # Draw outer circle
-    Draw(image).ellipse((x - outer_halo_radius, y - outer_halo_radius, x + outer_halo_radius, y + outer_halo_radius),
-                        outline="black", width=4)
-    Draw(image).ellipse((x - radius, y - radius, x + radius, y + radius), outline=color, width=2)
+        # Draw outer circle
+        Draw(image).ellipse((x - outer_halo_radius, y - outer_halo_radius, x + outer_halo_radius, y + outer_halo_radius),
+                            outline="black", width=4)
+        Draw(image).ellipse((x - radius, y - radius, x + radius, y + radius), outline=color, width=2)
 
-    # Draw inner circle
-    Draw(image).ellipse((x - 4, y - 4, x + 4, y + 4), outline="black", width=4)
-    Draw(image).ellipse((x - 2, y - 2, x + 2, y + 2), fill=color)
+        # Draw inner circle
+        Draw(image).ellipse((x - 4, y - 4, x + 4, y + 4), outline="black", width=4)
+        Draw(image).ellipse((x - 2, y - 2, x + 2, y + 2), fill=color)
 
-    # Add label to the circle, indicating the action. make sure the label is visible (inside the image)
-    if x + 10 < image.width and y + 10 < image.height:
-        Draw(image).text((x + 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
+        # Add label to the circle, indicating the action. make sure the label is visible (inside the image)
+        if x + 10 < image.width and y + 10 < image.height:
+            Draw(image).text((x + 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
-    elif x - 10 > 0 and y - 10 > 0:
-        Draw(image).text((x - 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
+        elif x - 10 > 0 and y - 10 > 0:
+            Draw(image).text((x - 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
-    elif x + 10 < image.width and y - 10 > 0:
-        Draw(image).text((x + 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
+        elif x + 10 < image.width and y - 10 > 0:
+            Draw(image).text((x + 10, y - 10), action, fill=color, stroke_fill="black", stroke_width=2)
 
-    elif x - 10 > 0 and y + 10 < image.height:
-        Draw(image).text((x - 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
+        elif x - 10 > 0 and y + 10 < image.height:
+            Draw(image).text((x - 10, y + 10), action, fill=color, stroke_fill="black", stroke_width=2)
+        success = True
+    except Exception as e:
+        print(f"Error: {e}")
 
-    return image
+    return image, success
 
 
 def compute_scaling_factor(cx, cy, dx, dy, width, height, margin=15):
@@ -235,50 +245,56 @@ def annotate_scroll(x, y, screenshot: Image) -> Image:
     Annotate the screenshot with the scroll action by drawing an arrow
     with layered lines (an outline) to ensure visibility.
     """
-    margin = 15
-    # Use the proper center of the image: (width/2, height/2)
-    center_x, center_y = screenshot.width // 2, screenshot.height // 2
 
-    # Calculate the scaling factor to ensure the arrow stays inside the image boundaries
-    factor = compute_scaling_factor(center_x, center_y, x, y, screenshot.width, screenshot.height, margin)
-    end_x = center_x + x * factor
-    end_y = center_y + y * factor
+    success = False
+    try:
+        margin = 15
+        # Use the proper center of the image: (width/2, height/2)
+        center_x, center_y = screenshot.width // 2, screenshot.height // 2
 
-    # Create a drawing context
-    draw = ImageDraw(screenshot)
+        # Calculate the scaling factor to ensure the arrow stays inside the image boundaries
+        factor = compute_scaling_factor(center_x, center_y, x, y, screenshot.width, screenshot.height, margin)
+        end_x = center_x + x * factor
+        end_y = center_y + y * factor
 
-    # Calculate arrow head position and direction
-    arrow_length = 15
-    angle = math.atan2(y * factor, x * factor)
-    left_x = end_x - arrow_length * math.cos(angle + math.pi / 6)
-    left_y = end_y - arrow_length * math.sin(angle + math.pi / 6)
-    right_x = end_x - arrow_length * math.cos(angle - math.pi / 6)
-    right_y = end_y - arrow_length * math.sin(angle - math.pi / 6)
+        # Create a drawing context
+        draw = ImageDraw(screenshot)
 
-    # Set colors and line widths for layered drawing
-    outline_color = "black"  # Outline color to contrast with background
-    main_color = "red"     # Main arrow color
-    outline_width = 4        # Thicker width for the outline
-    main_width = 2           # Thinner width for the main arrow
+        # Calculate arrow head position and direction
+        arrow_length = 15
+        angle = math.atan2(y * factor, x * factor)
+        left_x = end_x - arrow_length * math.cos(angle + math.pi / 6)
+        left_y = end_y - arrow_length * math.sin(angle + math.pi / 6)
+        right_x = end_x - arrow_length * math.cos(angle - math.pi / 6)
+        right_y = end_y - arrow_length * math.sin(angle - math.pi / 6)
 
-    # --- Draw the outline (layered background) ---
-    draw.line((center_x, center_y, end_x, end_y), fill=outline_color, width=outline_width)
-    draw.line((end_x, end_y, left_x, left_y), fill=outline_color, width=outline_width)
-    draw.line((end_x, end_y, right_x, right_y), fill=outline_color, width=outline_width)
+        # Set colors and line widths for layered drawing
+        outline_color = "black"  # Outline color to contrast with background
+        main_color = "red"     # Main arrow color
+        outline_width = 4        # Thicker width for the outline
+        main_width = 2           # Thinner width for the main arrow
 
-    # --- Draw the main arrow on top ---
-    draw.line((center_x, center_y, end_x, end_y), fill=main_color, width=main_width)
-    draw.line((end_x, end_y, left_x, left_y), fill=main_color, width=main_width)
-    draw.line((end_x, end_y, right_x, right_y), fill=main_color, width=main_width)
+        # --- Draw the outline (layered background) ---
+        draw.line((center_x, center_y, end_x, end_y), fill=outline_color, width=outline_width)
+        draw.line((end_x, end_y, left_x, left_y), fill=outline_color, width=outline_width)
+        draw.line((end_x, end_y, right_x, right_y), fill=outline_color, width=outline_width)
 
-    # --- Add a label with text outline for extra readability ---
-    # Using stroke parameters (available in newer Pillow versions)
-    draw.text(
-        (center_x + 10, center_y + 10),
-        f"Scroll page ({y / screenshot.width:.2f})",
-        fill=main_color,
-        stroke_width=2,
-        stroke_fill=outline_color
-    )
+        # --- Draw the main arrow on top ---
+        draw.line((center_x, center_y, end_x, end_y), fill=main_color, width=main_width)
+        draw.line((end_x, end_y, left_x, left_y), fill=main_color, width=main_width)
+        draw.line((end_x, end_y, right_x, right_y), fill=main_color, width=main_width)
 
-    return screenshot
+        # --- Add a label with text outline for extra readability ---
+        # Using stroke parameters (available in newer Pillow versions)
+        draw.text(
+            (center_x + 10, center_y + 10),
+            f"Scroll page ({y / screenshot.width:.2f})",
+            fill=main_color,
+            stroke_width=2,
+            stroke_fill=outline_color
+        )
+        success = True
+    except Exception as e:
+        print(f"Error: {e}")
+
+    return screenshot, success

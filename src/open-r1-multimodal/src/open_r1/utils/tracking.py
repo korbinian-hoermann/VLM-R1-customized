@@ -134,10 +134,6 @@ class TrainingTracker:
             return
 
         print("Updateing tracking table")
-        print(self.batch_records)
-        print(self.log_to_wandb)
-        print(self.wandb_table)
-        print(wandb.run)
 
         # Initialize a single W&B table if logging to W&B and not already created
         if self.log_to_wandb and wandb.run is not None and self.wandb_table is None:
@@ -165,20 +161,16 @@ class TrainingTracker:
                 wandb_row = list(row)
                 # Process images for W&B (convert base64 back to image objects)
                 image_idx = columns.index('image')
-                print(f"Image index: {image_idx}")
                 annotated_idx = columns.index('annotated_image')
-                print(f"Annotated image index: {annotated_idx}")
                 
                 if row['image'] is not None:
                     print(f"Adding image to W&B table")
                     img = self._base64_to_image(row['image'])
                     wandb_row[image_idx] = wandb.Image(img)
-                    print(f"Added image to W&B table")
                 else:
                     wandb_row[image_idx] = None
                     
                 if row['annotated_image'] is not None:
-                    print(f"Adding annotated image to W&B table")
                     ann_img = self._base64_to_image(row['annotated_image'])
                     wandb_row[annotated_idx] = wandb.Image(ann_img)
                 else:
