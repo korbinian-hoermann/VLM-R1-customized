@@ -594,7 +594,7 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
         print("\tResult:", result)
 
     # Extract rewards from the results
-    rewards = [result[1][1] for result in results]
+    rewards = [result[1] for result in results]
 
     print("*"*50)
     print("low level action rewards:", rewards)
