@@ -587,14 +587,14 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
         if success:
             result = evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions)
         else:
-            result = ("Failed to annotate image", 0)
+            result = ('reasoning', 'Failed to annotate image'), ("Failed to annotate image", 0)
 
         results.append(result)
         print("\n\n")
         print("\tResult:", result)
 
     # Extract rewards from the results
-    rewards = [result[1] for result in results]
+    rewards = [result[1][1] for result in results]
 
     print("*"*50)
     print("low level action rewards:", rewards)
