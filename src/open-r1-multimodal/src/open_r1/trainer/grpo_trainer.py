@@ -700,7 +700,29 @@ class Qwen2VLGRPOTrainer(Trainer):
                         # reward_kwargs[key].extend([example[key]] * self.num_generations)
                         reward_kwargs[key].extend([example[key]])
                 output_reward_func = reward_func(prompts=prompts, completions=completions, **reward_kwargs)
-                print(f"output_reward_func (not PretrainedModel): {output_reward_func}<")
+                print(f"> output_reward_func (not PretrainedModel): {output_reward_func}")
+
+                # Process the reward outputs in case it is a dict
+                reasoning_list = []
+                annotated_image_list = []
+                if reward_func.__name__ == "low_level_action_reward" or reward_func.__name__ == "high_level_action_reward":
+                    if isinstance(output_reward_func, dict):
+                        print(f"{reward_func.__name__} result: ")
+                        pprint.pp(output_reward_func)
+
+                        if "scores" in output_reward_func:
+                            numeric_scores = output_reward_func["scores"]
+                            if "reasoning" in output_reward_func:
+                                reasoning_list = output_reward_func["reasoning"]
+                            if "annotated_image" in output_reward_func:
+                                annotated_image_list = output_reward_func["annotated_image"]
+                            output_reward_func = numeric_scores
+                        else:
+                            numeric_scores = output_reward_func
+
+
+
+
                 rewards_per_func[:, i] = torch.tensor(output_reward_func, dtype=torch.float32, device=device)
 
         # Gather rewards across processes
