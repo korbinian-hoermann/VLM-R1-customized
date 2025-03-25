@@ -745,8 +745,6 @@ class Qwen2VLGRPOTrainer(Trainer):
         print(f"\n\n")
         print(f"rewards_per_func: {rewards_per_func}")
         tracking_low_level_action_evaluation_scores, tracking_high_level_action_evaluation_scores, tracking_custom_format_reward_scores = rewards_per_func.split(1, dim=1)
-        tracking_low_level_action_evaluation_reasonings = ["dummy"] * len(tracking_low_level_action_evaluation_scores)
-        tracking_high_level_action_evaluation_reasonings = ["dummy"] * len(tracking_high_level_action_evaluation_scores)
 
         print(f"dimensions of tracking_low_level_action_evaluation_scores: {tracking_low_level_action_evaluation_scores.shape}")
         print(f"dimensions of tracking_high_level_action_evaluation_scores: {tracking_high_level_action_evaluation_scores.shape}")
