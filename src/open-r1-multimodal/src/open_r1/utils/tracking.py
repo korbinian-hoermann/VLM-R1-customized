@@ -149,12 +149,16 @@ class TrainingTracker:
         if self.accelerator.is_main_process:
             # Convert gathered records (now contains all processes' data)
             all_records = []
-            for record_group in gathered_records:  # List of lists from each process
-                all_records.extend(record_group)
+            for process_records in gathered_records:
+                if isinstance(process_records, list):
+                    all_records.extend(process_records)
+                else:  # Handle single-record edge case
+                    all_records.append(process_records)
 
-
-            # Process and log all_records
-            batch_df = pd.DataFrame(all_records)
+            # Create DataFrame with explicit column validation
+            valid_records = [r for r in all_records if isinstance(r, dict)]
+            print(f"Valid records: {len(valid_records)}")
+            batch_df = pd.DataFrame(valid_records, columns=self.tracking_df.columns)
             print("Batch DF")
             print(batch_df.columns)
             print(batch_df.head())
