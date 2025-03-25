@@ -7,7 +7,7 @@ from openai import AsyncOpenAI
 
 class ActionResponseFormat(BaseModel):
     reasoning: str
-    final_rating: int
+    final_rating: float
 
 LOW_LEVEL_ACTION_EVALUATION_SYSTEM_PROMPT = """
 # Role
@@ -42,7 +42,7 @@ The web agent has access to the following low-level actions:
     Your task:
     Evaluate whether the low-level action directly executes the high-level action based on the provided screenshot.
 
-        Yes (Rating = 1):
+        Yes (Rating = 1.0):
             
             The chosen low-level action correctly executes the high-level action.
             If the screenshot includes annotations, check if they match the target of the high-level action. 
@@ -50,7 +50,7 @@ The web agent has access to the following low-level actions:
             Further, an answer action represents the final output of the agent, so make sure it is relevant to the goal. 
             
 
-        No (Rating = 0):
+        No (Rating = 0.0):
         
             The low-level action does not directly execute the high-level action based on the current screenshot.
 
@@ -62,7 +62,7 @@ The high-level action is to click "Submit". The low-level action `pyautogui.clic
 But the annotated click action in the screenshot is not targeting the "Submit" button.
 
 final_rating: 
-0
+0.0
 
 """
 
@@ -117,9 +117,9 @@ You are a process reward model that evaluates textual high-level actions of auto
                 [CONCLUSION] <Summarize visual grounding, plausibility and optimality.>  
 
             final_rating:
-                1 (plausible and optimal)
+                1.0 (plausible and optimal)
                 0.5 (plausible but suboptimal)
-                0 (implausible)
+                0.0 (implausible)
 
 '''
 
@@ -130,7 +130,7 @@ def evaluate_low_level_action(
         high_level_actions: str,
         low_level_actions: str,
         previous_actions: str,
-) -> Tuple[str, int]:
+) -> Tuple[str, float]:
 
 
     print("Annotating screenshot with the generated low-level action...")
@@ -187,7 +187,7 @@ def evaluate_low_level_action(
             else:  # Second attempt failed
                 print(f"Error during evaluation (attempt {attempt + 1}): {str(e)}")
                 # Return a neutral rating after all retries failed
-                return "Error during evaluation", 0
+                return "Error during evaluation", 0.
 
 def evaluate_high_level_action(
         client,
@@ -195,7 +195,7 @@ def evaluate_high_level_action(
         screenshot: 'Image', # PIL Image object
         high_level_actions: str,
         previous_actions: str,
-) -> Tuple[str, int]:
+) -> Tuple[str, float]:
 
 
     print("Annotating screenshot with the generated low-level action...")
@@ -251,4 +251,4 @@ def evaluate_high_level_action(
             else:  # Second attempt failed
                 print(f"Error during evaluation (attempt {attempt + 1}): {str(e)}")
                 # Return a neutral rating after all retries failed
-                return "Error during evaluation", 0
+                return "Error during evaluation", 0.0
