@@ -638,13 +638,15 @@ def high_level_action_reward(completions, image_path, problem, **kwargs):
 
 
         # Call evaluate_high_level_action synchronously
-        result = evaluate_high_level_action(client, task, img, high_level_action, previous_actions)
-        results.append(result)
+        reasoning, score = evaluate_high_level_action(client, task, img, high_level_action, previous_actions)
+        results.append((reasoning, score))
+
+
         print("\n\n")
-        print("\tResult:", result)
+        print("\tResult:", results)
 
     # Extract rewards from the results
-    rewards = [result[1][1] for result in results]
+    rewards = [{"reasoning": result[0], "score": result[1]} for result in results]
 
     print("*"*50)
     print("high level action rewards:", rewards)

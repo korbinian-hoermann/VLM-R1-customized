@@ -719,8 +719,9 @@ class Qwen2VLGRPOTrainer(Trainer):
                         numeric_scores.append(numeric_score)
                         reasoning = output["reasoning"][1]
                         reasoning_list.append(reasoning)
-                        annotated_image = output["annotated_image"]
-                        annotated_image_list.append(annotated_image)
+                        if "annotated_image" in output:
+                            annotated_image = output["annotated_image"]
+                            annotated_image_list.append(annotated_image)
 
                     output_reward_func = numeric_scores
 
