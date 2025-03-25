@@ -140,15 +140,24 @@ class TrainingTracker:
 
         # Gather records from all processes using proper object gathering
         gathered_records = self.accelerator.gather_for_metrics(self.batch_records)
+        print("Gathered records")
+        print(gathered_records)
+        print(type(gathered_records))
+        print(len(gathered_records))
 
         # Only main process handles logging
         if self.accelerator.is_main_process:
-            # Flatten the list of lists from different processes
-            all_records = [record for sublist in gathered_records for record in sublist]
+            # Convert gathered records (now contains all processes' data)
+            all_records = []
+            for record_group in gathered_records:  # List of lists from each process
+                all_records.extend(record_group)
+
 
             # Process and log all_records
             batch_df = pd.DataFrame(all_records)
             self.tracking_df = pd.concat([self.tracking_df, batch_df], ignore_index=True)
+
+
 
             # Initialize a single W&B table if logging to W&B and not already created
             if self.log_to_wandb and wandb.run is not None and self.wandb_table is None:
