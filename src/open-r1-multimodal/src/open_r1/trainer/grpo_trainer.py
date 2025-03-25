@@ -702,36 +702,36 @@ class Qwen2VLGRPOTrainer(Trainer):
                 output_reward_func = reward_func(prompts=prompts, completions=completions, **reward_kwargs)
                 print(f"> output_reward_func (not PretrainedModel): {output_reward_func}")
 
-                # Process the reward outputs in case it is a dict
-                reasoning_list = []
-                annotated_image_list = []
                 if reward_func.__name__ == "low_level_action_reward" or reward_func.__name__ == "high_level_action_reward":
-                    if isinstance(output_reward_func, dict):
+                    # Process the reward outputs in case it is a dict
+                    reasoning_list = []
+                    annotated_image_list = []
+                    numeric_scores = []
+
+                    for output in output_reward_func:
+
                         print(f"{reward_func.__name__} result: ")
-                        pprint.pp(output_reward_func)
+                        print(f"\noutput:")
+                        pprint.pp(output)
+                        numeric_score = output_reward_func["score"][1]
+                        numeric_scores.append(numeric_score)
+                        reasoning = output_reward_func["reasoning"][1]
+                        reasoning_list.append(reasoning)
+                        annotated_image = output_reward_func["annotated_image"]
+                        annotated_image_list.append(annotated_image)
 
+                    output_reward_func = numeric_scores
 
-                        if "scores" in output_reward_func:
-                            numeric_scores = output_reward_func["score"]
-                            if "reasoning" in output_reward_func:
-                                reasoning_list = output_reward_func["reasoning"]
-                            if "annotated_image" in output_reward_func:
-                                annotated_image_list = output_reward_func["annotated_image"]
-                            output_reward_func = numeric_scores
-                        else:
-                            numeric_scores = output_reward_func
+                else:
+                    numeric_scores = output_reward_func
 
-                        if reward_func.__name__ == "low_level_action_reward":
-                            tracking_low_level_action_evaluation_scores.extend(numeric_scores)
-                            tracking_low_level_action_evaluation_reasonings.extend(reasoning_list)
-                            tracking_annotated_images.extend(annotated_image_list)
-                        elif reward_func.__name__ == "high_level_action_reward":
-                            tracking_high_level_action_evaluation_scores.extend(numeric_scores)
-                            tracking_high_level_action_evaluation_reasonings.extend(reasoning_list)
-
-
-
-
+                if reward_func.__name__ == "low_level_action_reward":
+                    tracking_low_level_action_evaluation_scores.extend(numeric_scores)
+                    tracking_low_level_action_evaluation_reasonings.extend(reasoning_list)
+                    tracking_annotated_images.extend(annotated_image_list)
+                elif reward_func.__name__ == "high_level_action_reward":
+                    tracking_high_level_action_evaluation_scores.extend(numeric_scores)
+                    tracking_high_level_action_evaluation_reasonings.extend(reasoning_list)
 
 
             rewards_per_func[:, i] = torch.tensor(output_reward_func, dtype=torch.float32, device=device)
