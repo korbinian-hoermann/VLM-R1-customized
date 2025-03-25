@@ -138,15 +138,13 @@ class TrainingTracker:
 
         print("Updateing tracking table")
 
-        # Gather records from all processes
-        gathered_records = self.accelerator.gather(self.batch_records)
+        # Gather records from all processes using proper object gathering
+        gathered_records = self.accelerator.gather_for_metrics(self.batch_records)
 
         # Only main process handles logging
         if self.accelerator.is_main_process:
-            # Convert gathered records (now contains all processes' data)
-            all_records = []
-            for record_group in gathered_records:  # List of lists from each process
-                all_records.extend(record_group)
+            # Flatten the list of lists from different processes
+            all_records = [record for sublist in gathered_records for record in sublist]
 
             # Process and log all_records
             batch_df = pd.DataFrame(all_records)
