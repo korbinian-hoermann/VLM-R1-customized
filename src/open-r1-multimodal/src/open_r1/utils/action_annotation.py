@@ -85,6 +85,7 @@ def annotate_action(actions: str, screenshot: Image) -> Tuple[Image, bool]:
     print(f"Actions: {actions}")
 
     annotated_screenshot = screenshot
+    success = False
 
     for action in actions.split("\n"):
         print(f"\tCreating annotation for action: {action}")

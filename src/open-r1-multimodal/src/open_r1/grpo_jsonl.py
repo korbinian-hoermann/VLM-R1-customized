@@ -54,7 +54,6 @@ client = OpenAI(
     base_url=os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 )
 
-semaphore = asyncio.Semaphore(10)  # Limit to 10 concurrent API calls
 
 def custom_forward(
         self,
