@@ -713,6 +713,8 @@ class Qwen2VLGRPOTrainer(Trainer):
                         print(f"{reward_func.__name__} result: ")
                         print(f"\noutput:")
                         pprint.pp(output)
+                        print(output_reward_func["score"])
+                        print(output_reward_func["score"][1])
                         numeric_score = output_reward_func["score"][1]
                         numeric_scores.append(numeric_score)
                         reasoning = output_reward_func["reasoning"][1]
