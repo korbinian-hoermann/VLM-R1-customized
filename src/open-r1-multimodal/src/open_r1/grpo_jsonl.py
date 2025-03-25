@@ -589,13 +589,13 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
         else:
             reasoning, score = ('reasoning', 'Failed to annotate image'), ("Failed to annotate image", 0)
 
-        results.append((reasoning, score))
+        results.append((reasoning, score, annotated_img))
         print("\n\n")
         print("\tResult:", results)
 
 
     # create dict with keys: reasning, score, annotated_screenshot
-    rewards = [{"reasoning": result[0], "score": result[1], "annotated_screenshot": result[2]} for result in results]
+    rewards = [{"reasoning": result[0], "score": result[1], "annotated_image": result[2]} for result in results]
 
 
     print("*"*50)

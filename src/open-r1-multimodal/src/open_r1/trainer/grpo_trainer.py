@@ -710,8 +710,9 @@ class Qwen2VLGRPOTrainer(Trainer):
                         print(f"{reward_func.__name__} result: ")
                         pprint.pp(output_reward_func)
 
+
                         if "scores" in output_reward_func:
-                            numeric_scores = output_reward_func["scores"]
+                            numeric_scores = output_reward_func["score"]
                             if "reasoning" in output_reward_func:
                                 reasoning_list = output_reward_func["reasoning"]
                             if "annotated_image" in output_reward_func:
@@ -720,10 +721,20 @@ class Qwen2VLGRPOTrainer(Trainer):
                         else:
                             numeric_scores = output_reward_func
 
+                        if reward_func.__name__ == "low_level_action_reward":
+                            tracking_low_level_action_evaluation_scores.extend(numeric_scores)
+                            tracking_low_level_action_evaluation_reasonings.extend(reasoning_list)
+                            tracking_annotated_images.extend(annotated_image_list)
+                        elif reward_func.__name__ == "high_level_action_reward":
+                            tracking_high_level_action_evaluation_scores.extend(numeric_scores)
+                            tracking_high_level_action_evaluation_reasonings.extend(reasoning_list)
 
 
 
-                rewards_per_func[:, i] = torch.tensor(output_reward_func, dtype=torch.float32, device=device)
+
+
+
+            rewards_per_func[:, i] = torch.tensor(output_reward_func, dtype=torch.float32, device=device)
 
         # Gather rewards across processes
         rewards_per_func = self.accelerator.gather(rewards_per_func)
@@ -796,9 +807,13 @@ class Qwen2VLGRPOTrainer(Trainer):
                 prompt=tracking_prompts[i],
                 image_path=tracking_image_paths[i],
                 image=tracking_images[i],
-                #annotated_image=tracking_annotated_images[i],
                 model_response=tracking_model_responses[i],
                 ground_truth=tracking_ground_truths[i],
+                annotated_image=tracking_annotated_images[i],
+                low_level_action_evaluation_reasoning=tracking_low_level_action_evaluation_reasonings[i],
+                low_level_action_evaluation_score=tracking_low_level_action_evaluation_scores[i],
+                high_level_action_evaluation_reasoning=tracking_high_level_action_evaluation_reasonings[i],
+                high_level_action_evaluation_score=tracking_high_level_action_evaluation_scores[i],
             )
 
         training_tracker.update_tracking_table()
