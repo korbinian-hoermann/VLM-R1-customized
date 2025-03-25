@@ -118,7 +118,7 @@ You are a process reward model that evaluates textual high-level actions of auto
 
             final_rating:
                 1.0 (plausible and optimal)
-                0.5 (plausible but suboptimal)
+                0.5 (plausible but not optimal)
                 0.0 (implausible)
 
 '''
