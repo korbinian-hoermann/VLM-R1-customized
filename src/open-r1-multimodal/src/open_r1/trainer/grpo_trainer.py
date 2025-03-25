@@ -666,6 +666,16 @@ class Qwen2VLGRPOTrainer(Trainer):
         print(f"\n\n")
 
         rewards_per_func = torch.zeros(len(prompts), len(self.reward_funcs), device=device)
+
+        print(self.reward_funcs)
+        # print names of reward functions
+        for i, reward_func in enumerate(self.reward_funcs):
+            if isinstance(reward_func, PreTrainedModel):
+                reward_func_name = reward_func.config._name_or_path.split("/")[-1]
+            else:
+                reward_func_name = reward_func.__name__
+            print(f"Reward function {i}: {reward_func_name}")
+
         for i, (reward_func, reward_processing_class) in enumerate(
             zip(self.reward_funcs, self.reward_processing_classes)
         ):
@@ -690,6 +700,7 @@ class Qwen2VLGRPOTrainer(Trainer):
                         # reward_kwargs[key].extend([example[key]] * self.num_generations)
                         reward_kwargs[key].extend([example[key]])
                 output_reward_func = reward_func(prompts=prompts, completions=completions, **reward_kwargs)
+                print(f"output_reward_func (not PretrainedModel): {output_reward_func}<")
                 rewards_per_func[:, i] = torch.tensor(output_reward_func, dtype=torch.float32, device=device)
 
         # Gather rewards across processes
