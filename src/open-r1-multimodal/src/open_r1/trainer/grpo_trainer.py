@@ -713,13 +713,13 @@ class Qwen2VLGRPOTrainer(Trainer):
                         print(f"{reward_func.__name__} result: ")
                         print(f"\noutput:")
                         pprint.pp(output)
-                        print(output_reward_func["score"])
-                        print(output_reward_func["score"][1])
-                        numeric_score = output_reward_func["score"][1]
+                        print(output["score"])
+                        print(output["score"][1])
+                        numeric_score = output["score"][1]
                         numeric_scores.append(numeric_score)
-                        reasoning = output_reward_func["reasoning"][1]
+                        reasoning = output["reasoning"][1]
                         reasoning_list.append(reasoning)
-                        annotated_image = output_reward_func["annotated_image"]
+                        annotated_image = output["annotated_image"]
                         annotated_image_list.append(annotated_image)
 
                     output_reward_func = numeric_scores
