@@ -95,16 +95,16 @@ class TrainingTracker:
             'prompt': prompt,
             'image_path': image_path,
             'image': self._convert_image_to_base64(image) if image else None,
-            'annotated_image': self._convert_image_to_base64(annotated_image) if annotated_image else None,
             'model_response': model_response,
             'ground_truth': ground_truth,
-            'low_level_action_evaluation_reasoning': low_level_action_evaluation_reasoning,
-            'low_level_action_evaluation_score': low_level_action_evaluation_score,
+            'annotated_image': self._convert_image_to_base64(annotated_image) if annotated_image else None,
+            'custom_format_reward_score': custom_format_reward_score,
             'high_level_action_evaluation_reasoning': high_level_action_evaluation_reasoning,
             'high_level_action_evaluation_score': high_level_action_evaluation_score,
-            'custom_format_reward_score': custom_format_reward_score,
+            'low_level_action_evaluation_reasoning': low_level_action_evaluation_reasoning,
+            'low_level_action_evaluation_score': low_level_action_evaluation_score,
         }
-        
+
         self.batch_records.append(record)
     
     def _convert_image_to_base64(self, img: Image.Image) -> str:
