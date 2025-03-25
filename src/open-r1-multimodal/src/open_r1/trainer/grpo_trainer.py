@@ -66,7 +66,6 @@ from utils.tracking import TrainingTracker
 # What we call a reward function is a callable that takes a list of prompts and completions and returns a list of
 # rewards. When it's a string, it's a model ID, so it's loaded as a pretrained model.
 RewardFunc = Union[str, PreTrainedModel, Callable[[list, list], list[float]]]
-training_tracker = TrainingTracker(True, "./")
 
 
 class RepeatRandomSampler(Sampler):
@@ -408,6 +407,12 @@ class Qwen2VLGRPOTrainer(Trainer):
             processing_class=processing_class,
             callbacks=callbacks,
             optimizers=optimizers,
+        )
+        # Initialize the tracker with accelerator
+        self.training_tracker = TrainingTracker(
+            accelerator=self.accelerator,
+            log_to_wandb=True,
+            log_dir="./"
         )
 
         # Check if the per_device_train/eval_batch_size * num processes can be divided by the number of generations
@@ -800,7 +805,7 @@ class Qwen2VLGRPOTrainer(Trainer):
         # add samples to tracker
         for i in range(len(tracking_sample_ids)):
 
-            training_tracker.add_sample(
+            self.training_tracker.add_sample(
                 sample_id=tracking_sample_ids[i],
                 prompt=tracking_prompts[i],
                 image_path=tracking_image_paths[i],
@@ -815,7 +820,7 @@ class Qwen2VLGRPOTrainer(Trainer):
                 custom_format_reward_score=tracking_custom_format_reward_scores[i]
             )
 
-        training_tracker.update_tracking_table()
+        self.training_tracker.update_tracking_table()
 
         return {
             "prompt_ids": prompt_ids,
