@@ -722,10 +722,9 @@ class Qwen2VLGRPOTrainer(Trainer):
                         print(f"\noutput:")
                         pprint.pp(output)
                         print(output["score"])
-                        print(output["score"][1])
-                        numeric_score = output["score"][1]
+                        numeric_score = output["score"]
                         numeric_scores.append(numeric_score)
-                        reasoning = output["reasoning"][1]
+                        reasoning = output["reasoning"]
                         reasoning_list.append(reasoning)
                         if "annotated_image" in output:
                             annotated_image = output["annotated_image"]
