@@ -565,29 +565,35 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
         previous_actions = problem.lower().split("previous actions:")[1].split("\n\n\n")[0].strip()
         task = problem.lower().split("instruction:")[1].strip().split("\n")[0].strip()
 
-        high_level_action = command.split("Action:")[1].strip().split("\n")[0].strip()
-        low_level_action = command.split("Command:")[1].strip()
+        try:
+            high_level_action = command.split("Action:")[1].strip().split("\n")[0].strip()
+            low_level_action = command.split("Command:")[1].strip()
 
-        print("task:\n", task)
-        print("previous_actions:\n", previous_actions)
-        print("high_level_action:\n", high_level_action)
-        print("low_level_action:\n", low_level_action)
+            print("task:\n", task)
+            print("previous_actions:\n", previous_actions)
+            print("high_level_action:\n", high_level_action)
+            print("low_level_action:\n", low_level_action)
 
-        # Load image
-        img = PIL.Image.open(image_path)
-        print("Image size:", img.size)
+            # Load image
+            img = PIL.Image.open(image_path)
+            print("Image size:", img.size)
 
-        # Annotate image with predicted actions
-        annotated_img, annotation_success = annotate_action(screenshot=img, actions=low_level_action)
+            # Annotate image with predicted actions
+            annotated_img, annotation_success = annotate_action(screenshot=img, actions=low_level_action)
 
-        # Display annotated image
-        # display(annotated_img)
+            # Display annotated image
+            # display(annotated_img)
 
-        # Call evaluate_low_level_action synchronously
-        if annotation_success:
-            reasoning, score = evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions)
-        else:
-            reasoning, score = evaluate_low_level_action(client, task, img, high_level_action, low_level_action, previous_actions)
+            # Call evaluate_low_level_action synchronously
+            if annotation_success:
+                reasoning, score = evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions)
+            else:
+                reasoning, score = evaluate_low_level_action(client, task, img, high_level_action, low_level_action, previous_actions)
+        except Exception as e:
+            print("Error in evaluate_low_level_action:", e)
+            reasoning = "Error in evaluation"
+            score = 0.0
+            annotated_img = PIL.Image.open(image_path)
 
         results.append((reasoning, score, annotated_img))
         print("\n\n")
@@ -624,21 +630,28 @@ def high_level_action_reward(completions, image_path, problem, **kwargs):
         content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
         command = content_match.group(1).strip() if content_match else content.strip()
 
-        previous_actions = problem.lower().split("previous actions:")[1].split("\n\n\n")[0].strip()
-        task = problem.lower().split("instruction:")[1].strip().split("\n")[0].strip()
-        high_level_action = command.split("Action:")[1].strip().split("\n")[0].strip()
+        try:
+            previous_actions = problem.lower().split("previous actions:")[1].split("\n\n\n")[0].strip()
+            task = problem.lower().split("instruction:")[1].strip().split("\n")[0].strip()
+            high_level_action = command.split("Action:")[1].strip().split("\n")[0].strip()
 
-        print("task:\n", task)
-        print("previous_actions:\n", previous_actions)
-        print("high_level_action:\n", high_level_action)
-
-
-        # Load image
-        img = PIL.Image.open(image_path)
+            print("task:\n", task)
+            print("previous_actions:\n", previous_actions)
+            print("high_level_action:\n", high_level_action)
 
 
-        # Call evaluate_high_level_action synchronously
-        reasoning, score = evaluate_high_level_action(client, task, img, high_level_action, previous_actions)
+            # Load image
+            img = PIL.Image.open(image_path)
+
+
+            # Call evaluate_high_level_action synchronously
+            reasoning, score = evaluate_high_level_action(client, task, img, high_level_action, previous_actions)
+
+        except Exception as e:
+            print("Error in evaluate_high_level_action:", e)
+            reasoning = "Error in evaluation"
+            score = 0.0
+
         results.append((reasoning, score))
 
 
