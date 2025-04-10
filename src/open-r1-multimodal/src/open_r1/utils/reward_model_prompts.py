@@ -1,3 +1,5 @@
+import time
+
 from pydantic import BaseModel
 import os
 import base64
@@ -181,7 +183,8 @@ def evaluate_low_level_action(
         except Exception as e:
             if attempt == 0:  # First attempt failed
                 print(f"Error during evaluation (attempt {attempt + 1}): {str(e)}")
-                print("Retrying evaluation...")
+                print("Retrying evaluation after waiting 60 seconds...")
+                time.sleep(60)  # Wait for 60 seconds before retrying
                 continue
 
             else:  # Second attempt failed
@@ -246,6 +249,8 @@ def evaluate_high_level_action(
             if attempt == 0:  # First attempt failed
                 print(f"Error during evaluation (attempt {attempt + 1}): {str(e)}")
                 print("Retrying evaluation...")
+                print("Retrying evaluation after waiting 60 seconds...")
+                time.sleep(60)  # Wait for 60 seconds before retrying
                 continue
 
             else:  # Second attempt failed

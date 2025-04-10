@@ -578,16 +578,16 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
         print("Image size:", img.size)
 
         # Annotate image with predicted actions
-        annotated_img, success = annotate_action(screenshot=img, actions=low_level_action)
+        annotated_img, annotation_success = annotate_action(screenshot=img, actions=low_level_action)
 
         # Display annotated image
         # display(annotated_img)
 
         # Call evaluate_low_level_action synchronously
-        if success:
+        if annotation_success:
             reasoning, score = evaluate_low_level_action(client, task, annotated_img, high_level_action, low_level_action, previous_actions)
         else:
-            reasoning, score = ('reasoning', 'Failed to annotate image'), ("Failed to annotate image", 0)
+            reasoning, score = evaluate_low_level_action(client, task, img, high_level_action, low_level_action, previous_actions)
 
         results.append((reasoning, score, annotated_img))
         print("\n\n")
