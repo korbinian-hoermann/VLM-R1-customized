@@ -719,12 +719,12 @@ class Qwen2VLGRPOTrainer(Trainer):
                     for output in output_reward_func:
 
                         print(f"{reward_func.__name__} result: ")
-                        print(f"\noutput:")
                         pprint.pp(output)
                         print(output["score"])
-                        numeric_score = output["score"]
+                        print(output["score"][1])
+                        numeric_score = output["score"][1]
                         numeric_scores.append(numeric_score)
-                        reasoning = output["reasoning"]
+                        reasoning = output["reasoning"][1]
                         reasoning_list.append(reasoning)
                         if "annotated_image" in output:
                             annotated_image = output["annotated_image"]
