@@ -159,7 +159,7 @@ def evaluate_low_level_action(
     for attempt in range(2):  # Try up to 2 times
         try:
             response = client.beta.chat.completions.parse(
-                model="gpt-4o-2024-08-06",
+                model="gpt-4.1-2025-04-14",
                 messages=[
                     {"role": "system", "content": prompt},
                     {"role": "user",
@@ -224,7 +224,7 @@ def evaluate_high_level_action(
     for attempt in range(2):  # Try up to 2 times
         try:
             response = client.beta.chat.completions.parse(
-                model="gpt-4o-2024-08-06",
+                model="gpt-4.1-2025-04-14",
                 messages=[
                     {"role": "system", "content": prompt},
                     {"role": "user",
