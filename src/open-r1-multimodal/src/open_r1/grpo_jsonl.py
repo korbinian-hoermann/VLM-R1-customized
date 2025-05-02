@@ -592,7 +592,7 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
         except Exception as e:
             print("Error in evaluate_low_level_action:", e)
             reasoning = "Error in evaluation"
-            score = 0.0
+            score = ('final_rating', 0.0)
             annotated_img = PIL.Image.open(image_path)
 
         results.append((reasoning, score, annotated_img))
@@ -650,7 +650,7 @@ def high_level_action_reward(completions, image_path, problem, **kwargs):
         except Exception as e:
             print("Error in evaluate_high_level_action:", e)
             reasoning = "Error in evaluation"
-            score = 0.0
+            score = ('final_rating', 0.0)
 
         results.append((reasoning, score))
 
