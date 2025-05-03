@@ -47,6 +47,30 @@ from utils.reward_model_prompts import evaluate_low_level_action, evaluate_high_
 from openai import OpenAI
 from utils.tracking import TrainingTracker
 
+#
+import torch
+import warnings
+
+# --- BEGIN FIX for DeepSpeed Checkpoint Loading with PyTorch >= 2.6 ---
+try:
+    # Attempt to import the specific class causing the issue
+    from deepspeed.runtime.fp16.loss_scaler import LossScaler
+
+    # Check if add_safe_globals exists (available in newer PyTorch versions)
+    if hasattr(torch.serialization, 'add_safe_globals'):
+        torch.serialization.add_safe_globals([LossScaler])
+        print(f"INFO: Added {LossScaler} to torch safe globals for checkpoint loading.")
+    else:
+        # Older PyTorch versions didn't need this as weights_only=False was default
+        print("INFO: torch.serialization.add_safe_globals not found (likely older PyTorch), skipping.")
+
+except ImportError:
+    warnings.warn("Could not import deepspeed.runtime.fp16.loss_scaler.LossScaler, checkpoint loading might fail if resuming DeepSpeed run.", ImportWarning)
+except Exception as e:
+    warnings.warn(f"An unexpected error occurred trying to add LossScaler to safe globals: {e}", RuntimeWarning)
+
+
+
 logger = logging.get_logger(__name__)
 
 client = OpenAI(
