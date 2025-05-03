@@ -597,17 +597,17 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
 
     print("Computing low level action reward")
     contents = [completion[0]["content"] for completion in completions]
-    print("problem:", problem)
+    #print("problem:", problem)
 
     tasks = []
     results = []
 
     for content, image_path, problem in zip(contents, image_path, problem):
 
-        print("\n")
-        print("Content:", content)
-        print("Problem:", problem)
-        print("\n")
+        #print("\n")
+        #print("Content:", content)
+        #print("Problem:", problem)
+        #print("\n")
         # Extract answer from content if it has think/answer tags
         content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
         command = content_match.group(1).strip() if content_match else content.strip()
@@ -619,14 +619,14 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
             high_level_action = command.split("Action:")[1].strip().split("\n")[0].strip()
             low_level_action = command.split("Command:")[1].strip()
 
-            print("task:\n", task)
-            print("previous_actions:\n", previous_actions)
-            print("high_level_action:\n", high_level_action)
-            print("low_level_action:\n", low_level_action)
+            #print("task:\n", task)
+            #print("previous_actions:\n", previous_actions)
+            #print("high_level_action:\n", high_level_action)
+            #print("low_level_action:\n", low_level_action)
 
             # Load image
             img = PIL.Image.open(image_path)
-            print("Image size:", img.size)
+            #print("Image size:", img.size)
 
             # Annotate image with predicted actions
             annotated_img, annotation_success = annotate_action(screenshot=img, actions=low_level_action)
@@ -647,7 +647,7 @@ def low_level_action_reward(completions, image_path, problem, **kwargs):
 
         results.append((reasoning, score, annotated_img))
         print("\n\n")
-        print("\tResult:", results)
+        #print("\tResult:", results)
 
 
     # create dict with keys: reasning, score, annotated_screenshot
@@ -665,17 +665,17 @@ def high_level_action_reward(completions, image_path, problem, **kwargs):
 
     print("Computing high level action reward")
     contents = [completion[0]["content"] for completion in completions]
-    print("problem:", problem)
+    #print("problem:", problem)
 
     tasks = []
     results = []
 
     for content, image_path, problem in zip(contents, image_path, problem):
 
-        print("\n")
-        print("Content:", content)
-        print("Problem:", problem)
-        print("\n")
+        #print("\n")
+        #print("Content:", content)
+        #print("Problem:", problem)
+        #print("\n")
         # Extract answer from content if it has think/answer tags
         content_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
         command = content_match.group(1).strip() if content_match else content.strip()
@@ -685,9 +685,9 @@ def high_level_action_reward(completions, image_path, problem, **kwargs):
             task = problem.lower().split("instruction:")[1].strip().split("\n")[0].strip()
             high_level_action = command.split("Action:")[1].strip().split("\n")[0].strip()
 
-            print("task:\n", task)
-            print("previous_actions:\n", previous_actions)
-            print("high_level_action:\n", high_level_action)
+            #print("task:\n", task)
+            #print("previous_actions:\n", previous_actions)
+            #print("high_level_action:\n", high_level_action)
 
 
             # Load image
@@ -705,8 +705,8 @@ def high_level_action_reward(completions, image_path, problem, **kwargs):
         results.append((reasoning, score))
 
 
-        print("\n\n")
-        print("\tResult:", results)
+        #print("\n\n")
+        #print("\tResult:", results)
 
     # Extract rewards from the results
     rewards = [{"reasoning": result[0], "score": result[1]} for result in results]

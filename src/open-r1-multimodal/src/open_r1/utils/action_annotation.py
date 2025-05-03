@@ -81,14 +81,14 @@ def annotate_action(actions: str, screenshot: Image) -> Tuple[Image, bool]:
     """
     Annotate the screenshot with the generated low-level action.
     """
-    print(f"Annotating screenshot with the generated low-level action...")
-    print(f"Actions: {actions}")
+    #print(f"Annotating screenshot with the generated low-level action...")
+    #print(f"Actions: {actions}")
 
     annotated_screenshot = screenshot
     success = False
 
     for action in actions.split("\n"):
-        print(f"\tCreating annotation for action: {action}")
+        #print(f"\tCreating annotation for action: {action}")
         if action.startswith("pyautogui.click"):
             x, y = extract_x_y(action)
             annotated_screenshot, success = annotate_click(x, y, screenshot)
@@ -129,7 +129,7 @@ def annotate_click(x, y, image):
     try:
         color = "red"
         action = "Click"
-        print(f"Annotating click at ({x}, {y})")
+        #print(f"Annotating click at ({x}, {y})")
         x, y = float(x), float(y)
 
         radius = min(image.width, image.height) // 15
@@ -140,7 +140,7 @@ def annotate_click(x, y, image):
         y = int(y * image.height)
 
         # Draw a red circle at the specified coordinates
-        print(f"Drawing red circle at ({x}, {y})")
+        #print(f"Drawing red circle at ({x}, {y})")
 
         # Draw outer circle
         Draw(image).ellipse((x - outer_halo_radius, y - outer_halo_radius, x + outer_halo_radius, y + outer_halo_radius),
@@ -180,7 +180,7 @@ def annotate_move(x: int, y: int, image: Image) -> Image:
     try:
         color = "red"
         action = "MoveTo"
-        print(f"Annotating moveTo at ({x}, {y})")
+        #print(f"Annotating moveTo at ({x}, {y})")
         x, y = float(x), float(y)
 
         radius = min(image.width, image.height) // 15
@@ -191,7 +191,7 @@ def annotate_move(x: int, y: int, image: Image) -> Image:
         y = int(y * image.height)
 
         # Draw a red circle at the specified coordinates
-        print(f"Drawing blue circle at ({x}, {y})")
+        #print(f"Drawing blue circle at ({x}, {y})")
 
         # Draw outer circle
         Draw(image).ellipse((x - outer_halo_radius, y - outer_halo_radius, x + outer_halo_radius, y + outer_halo_radius),
