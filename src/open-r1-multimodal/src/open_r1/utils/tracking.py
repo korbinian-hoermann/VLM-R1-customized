@@ -186,8 +186,8 @@ class TrainingTracker:
                     print(f"Adding row {n} of new batch_df to W&B table")
                     # Handle images specially for W&B
                     wandb_row = list(row)
-                    print(f"wandb row: {wandb_row}")
-                    print(f"wandb row type: {type(wandb_row)}")
+                    #print(f"wandb row: {wandb_row}")
+                    #print(f"wandb row type: {type(wandb_row)}")
                     # Process images for W&B (convert base64 back to image objects)
                     image_idx = columns.index('image')
                     annotated_idx = columns.index('annotated_image')
