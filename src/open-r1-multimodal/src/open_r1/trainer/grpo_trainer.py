@@ -525,14 +525,14 @@ class Qwen2VLGRPOTrainer(Trainer):
         print("=" * 50)
         print("\n\n")
 
-        print("\n\n1. Initial inputs:")
-        pprint.pp(inputs)
+        #print("\n\n1. Initial inputs:")
+        #pprint.pp(inputs)
 
         device = self.accelerator.device
         prompts = [x["prompt"] for x in inputs]
         prompts_text = [maybe_apply_chat_template(example, self.processing_class)["prompt"] for example in inputs]
-        print("\n\n3. Prompts text (after chat template?):")
-        pprint.pp(prompts_text)
+        #print("\n\n3. Prompts text (after chat template?):")
+        #pprint.pp(prompts_text)
         # Handle both pre-loaded images and image paths
         images = []
         for x in inputs:
@@ -655,8 +655,8 @@ class Qwen2VLGRPOTrainer(Trainer):
 
         # Decode the generated completions
         completions = self.processing_class.batch_decode(completion_ids, skip_special_tokens=True)
-        print("\n\n5. Completions:")
-        pprint.pp(completions)
+        #print("\n\n5. Completions:")
+        #pprint.pp(completions)
         tracking_model_responses = completions
         if is_conversational(inputs[0]):
             completions = [[{"role": "assistant", "content": completion}] for completion in completions]
@@ -718,10 +718,10 @@ class Qwen2VLGRPOTrainer(Trainer):
 
                     for output in output_reward_func:
 
-                        print(f"{reward_func.__name__} result: ")
-                        pprint.pp(output)
-                        print(output["score"])
-                        print(output["score"][1])
+                        #print(f"{reward_func.__name__} result: ")
+                        #pprint.pp(output)
+                        #print(output["score"])
+                        #print(output["score"][1])
                         numeric_score = output["score"][1]
                         numeric_scores.append(numeric_score)
                         reasoning = output["reasoning"][1]
