@@ -140,10 +140,10 @@ class TrainingTracker:
 
         # Gather records from all processes using proper object gathering
         gathered_records = self.accelerator.gather_for_metrics(self.batch_records)
-        print("Gathered records")
-        print(gathered_records)
-        print(type(gathered_records))
-        print(len(gathered_records))
+        #print("Gathered records")
+        #print(gathered_records)
+        #print(type(gathered_records))
+        #print(len(gathered_records))
 
         # Only main process handles logging
         if self.accelerator.is_main_process:
@@ -159,9 +159,9 @@ class TrainingTracker:
             valid_records = [r for r in all_records if isinstance(r, dict)]
             print(f"Valid records: {len(valid_records)}")
             batch_df = pd.DataFrame(valid_records, columns=self.tracking_df.columns)
-            print("Batch DF")
-            print(batch_df.columns)
-            print(batch_df.head())
+            #print("Batch DF")
+            #print(batch_df.columns)
+            #print(batch_df.head())
 
             self.tracking_df = pd.concat([self.tracking_df, batch_df], ignore_index=True)
 
