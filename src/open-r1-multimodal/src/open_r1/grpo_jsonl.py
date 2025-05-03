@@ -38,7 +38,6 @@ import asyncio
 
 # ----------------------- Fix the flash attention bug in the current version of transformers -----------------------
 from transformers.models.qwen2_5_vl.modeling_qwen2_5_vl import Qwen2_5_VLVisionFlashAttention2, apply_rotary_pos_emb_flashatt, flash_attn_varlen_func
-import torch
 from typing import Tuple
 from transformers.utils import logging
 
@@ -52,26 +51,50 @@ import torch
 import warnings
 
 # --- BEGIN FIX for DeepSpeed Checkpoint Loading with PyTorch >= 2.6 ---
-try:
-    # Attempt to import the specific class causing the issue
-    from deepspeed.runtime.fp16.loss_scaler import LossScaler
-    from deepspeed.runtime.zero.config import ZeroStageEnum
+# List to hold classes/functions we need to allowlist
+elements_to_add = [] # Renamed for clarity as it includes functions now
+imports_successful = True
 
+try:
+    # Attempt to import the LossScaler class
+    from deepspeed.runtime.fp16.loss_scaler import LossScaler
+    elements_to_add.append(LossScaler)
+except ImportError:
+    warnings.warn("Could not import deepspeed.runtime.fp16.loss_scaler.LossScaler.", ImportWarning)
+    imports_successful = False
+
+try:
+    # Attempt to import the ZeroStageEnum class
+    from deepspeed.runtime.zero.config import ZeroStageEnum
+    elements_to_add.append(ZeroStageEnum)
+except ImportError:
+    warnings.warn("Could not import deepspeed.runtime.zero.config.ZeroStageEnum.", ImportWarning)
+    imports_successful = False
+
+try:
+    # Attempt to import the fragment_address function <<-- ADDED THIS BLOCK
+    from deepspeed.utils.tensor_fragment import fragment_address
+    elements_to_add.append(fragment_address) # <<-- ADDED THIS
+except ImportError:
+    warnings.warn("Could not import deepspeed.utils.tensor_fragment.fragment_address.", ImportWarning)
+    imports_successful = False # Or handle specific errors differently if needed
+
+# Add any other classes/functions reported by errors here following the same pattern
+
+if imports_successful and elements_to_add:
     # Check if add_safe_globals exists (available in newer PyTorch versions)
     if hasattr(torch.serialization, 'add_safe_globals'):
-        torch.serialization.add_safe_globals([LossScaler])
-        print(f"INFO: Added {LossScaler} to torch safe globals for checkpoint loading.")
-        torch.serialization.add_safe_globals([ZeroStageEnum])
-        print(f"INFO: Added {ZeroStageEnum} to torch safe globals for checkpoint loading.")
+        try:
+            torch.serialization.add_safe_globals(elements_to_add)
+            print(f"INFO: Added {', '.join([getattr(el, '__name__', str(el)) for el in elements_to_add])} to torch safe globals for checkpoint loading.")
+        except Exception as e:
+            warnings.warn(f"An unexpected error occurred trying to add elements to safe globals: {e}", RuntimeWarning)
+
     else:
         # Older PyTorch versions didn't need this as weights_only=False was default
         print("INFO: torch.serialization.add_safe_globals not found (likely older PyTorch), skipping.")
-
-except ImportError:
-    warnings.warn("Could not import deepspeed.runtime.fp16.loss_scaler.LossScaler, checkpoint loading might fail if resuming DeepSpeed run.", ImportWarning)
-except Exception as e:
-    warnings.warn(f"An unexpected error occurred trying to add LossScaler to safe globals: {e}", RuntimeWarning)
-
+elif not elements_to_add:
+    warnings.warn("No DeepSpeed elements found/imported to add to safe globals.", RuntimeWarning)
 
 
 logger = logging.get_logger(__name__)
