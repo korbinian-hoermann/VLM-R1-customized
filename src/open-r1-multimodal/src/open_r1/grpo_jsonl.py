@@ -55,11 +55,14 @@ import warnings
 try:
     # Attempt to import the specific class causing the issue
     from deepspeed.runtime.fp16.loss_scaler import LossScaler
+    from deepspeed.runtime.zero.config import ZeroStageEnum
 
     # Check if add_safe_globals exists (available in newer PyTorch versions)
     if hasattr(torch.serialization, 'add_safe_globals'):
         torch.serialization.add_safe_globals([LossScaler])
         print(f"INFO: Added {LossScaler} to torch safe globals for checkpoint loading.")
+        torch.serialization.add_safe_globals([ZeroStageEnum])
+        print(f"INFO: Added {ZeroStageEnum} to torch safe globals for checkpoint loading.")
     else:
         # Older PyTorch versions didn't need this as weights_only=False was default
         print("INFO: torch.serialization.add_safe_globals not found (likely older PyTorch), skipping.")
