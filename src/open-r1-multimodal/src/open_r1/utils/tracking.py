@@ -216,7 +216,7 @@ class TrainingTracker:
             self.current_batch += 1
 
             # Every 10 batches, create a new cumulative table and log it with a new key.
-            if self.current_batch % 2 == 0:
+            if self.current_batch % 10 == 0:
                 if self.log_to_wandb and wandb.run is not None:
                     new_table = wandb.Table(columns=list(self.tracking_df.columns))
                     for _, row in self.tracking_df.iterrows():
